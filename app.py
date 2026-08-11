@@ -14,7 +14,7 @@ import os
 import re
 import secrets
 import sqlite3
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 
 # load .env if present (SMTP creds etc.)
@@ -138,6 +138,9 @@ CREATE TABLE IF NOT EXISTS sites (
     status TEXT DEFAULT 'pending',   -- pending | active | rejected
     token TEXT DEFAULT '',
     password TEXT DEFAULT '',
+    verified INTEGER DEFAULT 0,
+    verify_token TEXT DEFAULT '',
+    verify_expires TEXT DEFAULT '',
     created_at TEXT NOT NULL,
     approved_at TEXT
 );
@@ -157,7 +160,7 @@ def get_db():
         g.db = sqlite3.connect(DB_PATH)
         g.db.row_factory = sqlite3.Row
         g.db.executescript(SCHEMA)
-        # migration: ensure traffic + token + password columns exist (older DBs)
+        # migration: ensure traffic + token + password + verified columns exist (older DBs)
         cols = [r[1] for r in g.db.execute("PRAGMA table_info(sites)").fetchall()]
         if "traffic" not in cols:
             g.db.execute("ALTER TABLE sites ADD COLUMN traffic TEXT DEFAULT ''")
@@ -165,6 +168,12 @@ def get_db():
             g.db.execute("ALTER TABLE sites ADD COLUMN token TEXT DEFAULT ''")
         if "password" not in cols:
             g.db.execute("ALTER TABLE sites ADD COLUMN password TEXT DEFAULT ''")
+        if "verified" not in cols:
+            g.db.execute("ALTER TABLE sites ADD COLUMN verified INTEGER DEFAULT 0")
+            g.db.execute("ALTER TABLE sites ADD COLUMN verify_token TEXT DEFAULT ''")
+            g.db.execute("ALTER TABLE sites ADD COLUMN verify_expires TEXT DEFAULT ''")
+        elif "verify_token" not in cols:
+            g.db.execute("ALTER TABLE sites ADD COLUMN verify_token TEXT DEFAULT ''")
         g.db.commit()
     return g.db
 
@@ -268,23 +277,27 @@ def submit():
                     niche_str = ", ".join(niches)
                     token = secrets.token_urlsafe(16)
                     password = secrets.token_urlsafe(6)  # e.g. "xY3kPq_RsT"
+                    verify_token = secrets.token_urlsafe(24)
+                    verify_expires = (datetime.utcnow() +
+                                      timedelta(hours=24)).isoformat()
                     db.execute(
-                        "INSERT INTO sites (site_name, site_url, email, niche, description, dr, da, traffic, status, token, password, created_at)"
-                        " VALUES (?,?,?,?,?,?,?,?, 'pending', ?, ?, ?)",
+                        "INSERT INTO sites (site_name, site_url, email, niche, description, dr, da, traffic, status, token, password, verified, verify_token, verify_expires, created_at)"
+                        " VALUES (?,?,?,?,?,?,?,?, 'pending', ?, ?, 0, ?, ?, ?)",
                         (f.get("site_name", "").strip()[:60], site_url, email,
                          niche_str, f.get("description", "").strip()[:200],
                          min(dr, 100), min(da, 100),
                          f.get("traffic", "").strip()[:60],
-                         token, password, datetime.utcnow().isoformat()))
+                         token, password, verify_token, verify_expires,
+                         datetime.utcnow().isoformat()))
                     db.commit()
-                    msg = "✅ Site submitted! Our team will review it — once approved, your site appears in the directory for link exchanges."
+                    msg = "✅ Site submitted! Please verify your email — check your inbox for the verification link. Once verified, our team reviews your listing."
                     ok = True
-                    # welcome email with status-check link
-                    status_link = f"{SITE_URL}/link-exchange/status/{token}"
+                    # verification email: login + verify link only (no site details)
+                    verify_link = f"{SITE_URL}/link-exchange/verify/{verify_token}"
                     if email:
                         send_mail(
                             email,
-                            f"🎉 Welcome to TWH Link Exchange – {f.get('site_name','').strip()[:40]} Submitted!",
+                            "✅ Verify your email – TWH Link Exchange",
                             f"""<!DOCTYPE html>
 <html><body style="margin:0;padding:0;background:#f4f6fb;font-family:Arial,sans-serif">
 <center style="width:100%">
@@ -293,39 +306,29 @@ def submit():
 <table role="presentation" width="600" cellspacing="0" cellpadding="0" border="0" style="max-width:600px;width:100%">
   <tr>
     <td align="center" style="background:linear-gradient(135deg,#1a3a8f 0%,#2f7cf6 55%,#6c5ce7 100%);border-radius:16px 16px 0 0;padding:32px 24px">
-      <div style="font-size:40px;line-height:1">🎉</div>
-      <h1 style="color:#ffffff;margin:12px 0 6px;font-size:22px;font-weight:800;font-family:Arial,sans-serif">Welcome to TWH Link Exchange!</h1>
-      <p style="color:rgba(255,255,255,.9);margin:0;font-size:14px;font-family:Arial,sans-serif">Your website is under review</p>
+      <div style="font-size:40px;line-height:1">📧</div>
+      <h1 style="color:#ffffff;margin:12px 0 6px;font-size:22px;font-weight:800;font-family:Arial,sans-serif">Verify Your Email</h1>
+      <p style="color:rgba(255,255,255,.9);margin:0;font-size:14px;font-family:Arial,sans-serif">TWH Link Exchange</p>
     </td>
   </tr>
   <tr>
     <td style="background:#ffffff;border-radius:0 0 16px 16px;padding:28px 24px">
       <p style="font-size:15px;color:#0f1b33;line-height:1.6;margin:0 0 16px;font-family:Arial,sans-serif">Hi there,</p>
       <p style="font-size:14px;color:#3a4a63;line-height:1.7;margin:0 0 20px;font-family:Arial,sans-serif">
-        Thanks for submitting <b>{f.get('site_name','').strip()[:60]}</b> to the TWH Link Exchange directory!
-        Our team is reviewing your listing — usually within 24 hours.
+        Click the link below to verify your email and start adding your websites to the exchange.
+        The link is valid for <b>24 hours</b>.
       </p>
-
-      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="border:1px solid #e3e8f2;border-radius:12px;margin-bottom:20px">
-        <tr><td style="background:#f8faff;padding:12px 20px;font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:#2f7cf6;border-bottom:1px solid #e3e8f2;border-radius:12px 12px 0 0;font-family:Arial,sans-serif">Your Submission</td></tr>
-        <tr><td style="padding:12px 20px 2px;color:#5a6b85;font-weight:600;font-size:13px;font-family:Arial,sans-serif">Site</td></tr>
-        <tr><td style="padding:2px 20px 12px;color:#0f1b33;font-weight:700;font-size:14px;font-family:Arial,sans-serif">{f.get('site_name','').strip()[:60]}</td></tr>
-        <tr style="background:#fafbfe"><td style="padding:12px 20px 2px;color:#5a6b85;font-weight:600;font-size:13px;font-family:Arial,sans-serif">URL</td></tr>
-        <tr style="background:#fafbfe"><td style="padding:2px 20px 12px;color:#2f7cf6;font-weight:700;font-size:14px;font-family:Arial,sans-serif">{site_url}</td></tr>
-        <tr><td style="padding:12px 20px 2px;color:#5a6b85;font-weight:600;font-size:13px;font-family:Arial,sans-serif">Niches</td></tr>
-        <tr><td style="padding:2px 20px 12px;color:#0f1b33;font-weight:700;font-size:14px;font-family:Arial,sans-serif">{niche_str}</td></tr>
-        <tr style="background:#fafbfe"><td style="padding:12px 20px 2px;color:#5a6b85;font-weight:600;font-size:13px;font-family:Arial,sans-serif">DR / DA</td></tr>
-        <tr style="background:#fafbfe"><td style="padding:2px 20px 14px;color:#0f1b33;font-weight:700;font-size:14px;font-family:Arial,sans-serif">{dr} / {da}</td></tr>
-      </table>
-
-      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#f5f8ff;border:1px solid #e3ebff;border-radius:12px;margin-bottom:20px">
-        <tr><td style="padding:16px 20px">
-          <div style="font-weight:700;color:#0f1b33;font-size:14px;margin-bottom:6px;font-family:Arial,sans-serif">📋 Check your listing status</div>
-          <div style="font-size:13px;color:#5a6b85;line-height:1.6;margin-bottom:10px;font-family:Arial,sans-serif">Use this link anytime to see if your site is <b>Pending</b>, <b>Approved</b> or <b>Rejected</b>:</div>
-          <a href="{status_link}" style="display:inline-block;background:linear-gradient(135deg,#2f7cf6,#6c5ce7);color:#ffffff;text-decoration:none;padding:12px 28px;border-radius:50px;font-size:14px;font-weight:700;font-family:Arial,sans-serif">View My Status →</a>
+      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin-bottom:20px">
+        <tr><td align="center">
+          <a href="{verify_link}" style="display:inline-block;background:linear-gradient(135deg,#2f7cf6,#6c5ce7);color:#ffffff;text-decoration:none;padding:14px 36px;border-radius:50px;font-size:15px;font-weight:700;font-family:Arial,sans-serif">Verify my email</a>
         </td></tr>
       </table>
-
+      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#f5f8ff;border:1px solid #e3ebff;border-radius:12px;margin-bottom:20px">
+        <tr><td style="padding:16px 20px">
+          <div style="font-size:13px;color:#5a6b85;line-height:1.7;margin-bottom:8px;font-family:Arial,sans-serif">If the button doesn't work, copy this link:</div>
+          <div style="font-size:12px;color:#2f7cf6;word-break:break-all;font-family:monospace;line-height:1.6">{verify_link}</div>
+        </td></tr>
+      </table>
       <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="border:1px solid #e3e8f2;border-radius:12px;margin-bottom:20px">
         <tr><td style="background:#f0f7ff;padding:12px 20px;font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:#1a3a8f;border-bottom:1px solid #e3e8f2;border-radius:12px 12px 0 0;font-family:Arial,sans-serif">🔑 Your Login Details</td></tr>
         <tr><td style="padding:12px 20px 2px;color:#5a6b85;font-weight:600;font-size:13px;font-family:Arial,sans-serif">Username (email)</td></tr>
@@ -333,22 +336,14 @@ def submit():
         <tr style="background:#fafbfe"><td style="padding:12px 20px 2px;color:#5a6b85;font-weight:600;font-size:13px;font-family:Arial,sans-serif">Password</td></tr>
         <tr style="background:#fafbfe"><td style="padding:2px 20px 14px;color:#0f1b33;font-weight:700;font-size:14px;font-family:Arial,sans-serif">{password}</td></tr>
       </table>
-
       <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin-bottom:12px">
         <tr><td align="center">
           <a href="{SITE_URL}/link-exchange/login" style="display:inline-block;background:#0f1b33;color:#ffffff;text-decoration:none;padding:14px 32px;border-radius:50px;font-size:15px;font-weight:700;font-family:Arial,sans-serif">Login to Your Account →</a>
         </td></tr>
       </table>
-      <p style="font-size:12px;color:#8a97ad;text-align:center;margin:0 0 16px;font-family:Arial,sans-serif">Login with the email and password above to manage your listing</p>
-
-      <p style="font-size:13px;color:#5a6b85;line-height:1.6;margin:0 0 16px;font-family:Arial,sans-serif">
-        Once approved, your site appears in the directory and other site owners can send you link exchange requests directly by email.
-      </p>
-
-      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="border-top:1px solid #eef1f7;padding-top:16px">
+      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="border-top:1px solid #eef1f7">
         <tr><td align="center" style="padding-top:16px">
-          <p style="font-size:12px;color:#8a97ad;margin:0 0 4px;font-family:Arial,sans-serif">Sent via <b style="color:#2f7cf6">TWH Link Exchange Directory</b></p>
-          <p style="font-size:12px;color:#aab4c6;margin:0;font-family:Arial,sans-serif">thewebhospitality.com/link-exchange</p>
+          <p style="font-size:12px;color:#8a97ad;margin:0;font-family:Arial,sans-serif">Sent via <b style="color:#2f7cf6">TWH Link Exchange Directory</b></p>
         </td></tr>
       </table>
     </td>
@@ -370,6 +365,28 @@ def status_page(token):
     if not site:
         return render_template("status.html", found=False, site=None, site_url=SITE_URL)
     return render_template("status.html", found=True, site=site, site_url=SITE_URL)
+
+
+@app.route("/verify/<verify_token>")
+def verify(verify_token):
+    db = get_db()
+    site = db.execute(
+        "SELECT * FROM sites WHERE verify_token=?",
+        (verify_token,)).fetchone()
+    if not site:
+        return render_template("verify.html", ok=False, reason="invalid", site_url=SITE_URL)
+    # check expiry
+    try:
+        exp = datetime.fromisoformat(site["verify_expires"])
+        if datetime.utcnow() > exp:
+            return render_template("verify.html", ok=False, reason="expired", site_url=SITE_URL)
+    except (ValueError, TypeError):
+        pass
+    if site["verified"]:
+        return render_template("verify.html", ok=True, reason="already", site=site, site_url=SITE_URL)
+    db.execute("UPDATE sites SET verified=1 WHERE id=?", (site["id"],))
+    db.commit()
+    return render_template("verify.html", ok=True, reason="done", site=site, site_url=SITE_URL)
 
 
 @app.route("/login", methods=["GET", "POST"])
