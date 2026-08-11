@@ -273,8 +273,8 @@ def sitemap():
         urls.append(
             f"<url><loc>{SITE_URL}/link-exchange/niche/{slug}/</loc>"
             f"<changefreq>weekly</changefreq><priority>0.7</priority></url>")
-        # programmatic SEO pages (3 per niche)
-        for pt in ("link-exchange-in", "guest-post-sites-in", "free-backlinks-for"):
+        # programmatic SEO pages (2 per niche)
+        for pt in ("link-exchange-in", "free-backlinks-for"):
             urls.append(
                 f"<url><loc>{SITE_URL}/link-exchange/{pt}-{slug}/</loc>"
                 f"<changefreq>weekly</changefreq><priority>0.6</priority></url>")
@@ -328,19 +328,6 @@ PROG_TYPES = {
         "h2_3": "Find {name} Link Exchange Partners Here",
         "para_3": "Browse the directory below, filter by niche and Domain Rating, and send a free exchange request to sites that match your audience. New partners are added every week.",
     },
-    "guest-post-sites-in": {
-        "h2_1": "Guest Post Sites in {name} for Backlinks",
-        "para_1": "Guest posting in {name} is one of the fastest ways to earn editorial backlinks. {intro} These sites accept contributor content — pitch them with a strong topic and earn a contextual link.",
-        "h2_2": "How to Get Guest Posts Accepted in {name}",
-        "bullets": [
-            "Study the site — read 3-5 recent {name} posts to match tone and format.",
-            "Pitch data-driven topics — stats, case studies, and original research get accepted fastest.",
-            "Write for humans first — SEO-friendly but genuinely useful {name} content.",
-            "Follow guidelines — most {name} sites publish clear contributor rules.",
-        ],
-        "h2_3": "Guest Post Sites in {name} Accepting Contributors",
-        "para_3": "Want a guaranteed {name} guest post without the pitching? Check our guest post service for published links on high-DR {name} sites.",
-    },
     "free-backlinks-for": {
         "h2_1": "Free Backlinks for {name} Sites",
         "para_1": "Every {name} site needs backlinks, and not all of them cost money. {intro} Use these free methods to build authority without spending a rupee.",
@@ -362,11 +349,6 @@ def prog_page_linkexchange(niche_slug):
     return _prog_page("link-exchange-in", niche_slug)
 
 
-@app.route("/guest-post-sites-in-<niche_slug>/")
-def prog_page_guestpost(niche_slug):
-    return _prog_page("guest-post-sites-in", niche_slug)
-
-
 @app.route("/free-backlinks-for-<niche_slug>/")
 def prog_page_backlinks(niche_slug):
     return _prog_page("free-backlinks-for", niche_slug)
@@ -384,9 +366,6 @@ def _prog_page(prog_type, niche_slug):
     if prog_type == "link-exchange-in":
         title = f"Link Exchange in {pretty} – Find {pretty} Link Exchange Sites | TWH"
         desc = f"Find link exchange in {pretty}. Browse {pretty} link exchange sites, list your website free, and build reciprocal backlinks with relevant {pretty} site owners."
-    elif prog_type == "guest-post-sites-in":
-        title = f"Guest Post Sites in {pretty} – Accepting Guest Posts 2026 | TWH"
-        desc = f"Best guest post sites in {pretty} accepting contributors in 2026. Pitch these {pretty} blogs, earn editorial backlinks, and grow your authority."
     else:
         title = f"Free Backlinks for {pretty} Sites – 2026 Guide | TWH"
         desc = f"Get free backlinks for {pretty} sites in 2026. Link exchanges, free directories, and content strategies to build {pretty} authority at zero cost."
