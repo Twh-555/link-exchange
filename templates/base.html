@@ -32,6 +32,22 @@
 </main>
 
 {% include '_footer.html' %}
+<script>
+  // ===== FAQ accordion (click to expand/collapse) =====
+  document.addEventListener('DOMContentLoaded', function () {
+    document.querySelectorAll('.faq-item .faq-question').forEach(function (q) {
+      q.addEventListener('click', function () {
+        var item = q.closest('.faq-item');
+        var wasOpen = item.classList.contains('open');
+        // close others (accordion style) - optional, remove for independent toggle
+        item.closest('.faq-accordion').querySelectorAll('.faq-item.open').forEach(function (i) {
+          i.classList.remove('open');
+        });
+        if (!wasOpen) item.classList.add('open');
+      });
+    });
+  });
+</script>
 {% block scripts %}{% endblock %}
 </body>
 </html>
