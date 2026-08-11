@@ -1,6 +1,7 @@
 {% extends 'base.html' %}
 {% block title %}Link Exchange Request – {{ site.site_name }} | Free Link Exchange Sites | TWH{% endblock %}
 {% block canonical %}{{ site_url }}/link-exchange/exchange/{{ site.id }}{% endblock %}
+{% block robots %}noindex, follow{% endblock %}
 {% block meta_desc %}Send a free link exchange request to {{ site.site_name }} (DR {{ site.dr }}, {{ site.niche }}). Build reciprocal backlinks with relevant link exchange sites.{% endblock %}
 
 {% block content %}
