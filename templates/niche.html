@@ -28,6 +28,7 @@
         <span class="badge-tag tag-dr">DR {{ s.dr }}</span>
         <span class="badge-tag tag-da">DA {{ s.da }}</span>
         {% if s.owner_verified %}<span class="badge-tag tag-owner"><i class="fa-solid fa-circle-check"></i> Verified Owner</span>{% endif %}
+        {% if exch_counts.get(s.site_url, 0) > 1 %}<span class="badge-tag tag-exch"><i class="fa-solid fa-users"></i> {{ exch_counts.get(s.site_url) }} Exchangers Available</span>{% endif %}
         {% if s.traffic %}<span class="badge-tag tag-traffic"><i class="fa-solid fa-chart-line"></i> {{ s.traffic }}</span>{% endif %}
         {% for n in (s.niche or '').split(', ') %}
           {% if n %}<span class="badge-tag tag-niche">{{ n }}</span>{% endif %}

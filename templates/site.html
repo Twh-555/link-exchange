@@ -50,6 +50,7 @@
       <span class="badge-tag tag-da">DA {{ s.da }}</span>
       {% if s.owner_verified %}<span class="badge-tag tag-owner"><i class="fa-solid fa-circle-check"></i> Verified Owner</span>{% endif %}
       {% if s.traffic %}<span class="badge-tag tag-traffic"><i class="fa-solid fa-chart-line"></i> {{ s.traffic }}</span>{% endif %}
+      {% if sellers|length > 1 %}<span class="badge-tag" style="background:#eef4ff;color:#2f7cf6"><i class="fa-solid fa-users"></i> {{ sellers|length }} sellers</span>{% endif %}
       {% for n in (s.niche or '').split(', ') %}
         {% if n %}<span class="badge-tag tag-niche">{{ n }}</span>{% endif %}
       {% endfor %}
@@ -91,5 +92,47 @@
       <li>Once both sides place the link, the exchange is live. Keep it niche-relevant!</li>
     </ol>
   </article>
+
+  {% if sellers|length > 1 %}
+  <article class="content-article mt-8">
+    <h2>{% if sellers|length %}Available Sellers / Partners ({{ sellers|length }}){% endif %}</h2>
+    <p style="color:var(--muted,#5a6b85);font-size:.9rem">
+      Multiple people have registered this domain for link exchange. Contact any of them below:
+    </p>
+    <div class="admin-table-wrap" style="margin-top:12px">
+      <table style="width:100%;border-collapse:collapse;font-size:.85rem">
+        <thead>
+          <tr style="background:#f8faff;text-align:left">
+            <th style="padding:10px 14px">Registered By</th>
+            <th style="padding:10px 14px">Contact Email</th>
+            <th style="padding:10px 14px">DR</th>
+            <th style="padding:10px 14px">Traffic</th>
+            <th style="padding:10px 14px">Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for seller in sellers %}
+          <tr style="border-top:1px solid var(--border,#e3e8f2)">
+            <td style="padding:10px 14px">
+              <b>{{ seller.site_name }}</b>
+              {% if seller.owner_verified %}<span class="tag-owner" style="padding:2px 8px;border-radius:12px;font-size:.7rem;font-weight:700;margin-left:6px"><i class="fa-solid fa-circle-check"></i> Owner</span>{% endif %}
+            </td>
+            <td style="padding:10px 14px;color:#2f7cf6">
+              <a href="mailto:{{ seller.email }}" style="color:#2f7cf6;text-decoration:none">{{ seller.email }}</a>
+            </td>
+            <td style="padding:10px 14px">DR {{ seller.dr }}</td>
+            <td style="padding:10px 14px">{{ seller.traffic or '—' }}</td>
+            <td style="padding:10px 14px">
+              {% if seller.status == 'active' %}<span style="color:#0a7a3d;font-weight:600">✅ Active</span>
+              {% elif seller.status == 'pending' %}<span style="color:#b8860b;font-weight:600">⏳ Pending</span>
+              {% else %}<span style="color:#8a97ad">Rejected</span>{% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </article>
+  {% endif %}
 </section>
 {% endblock %}

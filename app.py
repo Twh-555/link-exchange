@@ -240,8 +240,13 @@ def index():
     db = get_db()
     sites = db.execute(
         "SELECT * FROM sites WHERE status='active' ORDER BY owner_verified DESC, dr DESC").fetchall()
+    # count of registered exchangers per domain (any status except rejected)
+    exch_counts = {}
+    for row in db.execute(
+            "SELECT site_url, COUNT(*) c FROM sites WHERE status IN ('active','pending') GROUP BY site_url").fetchall():
+        exch_counts[row["site_url"]] = row["c"]
     return render_template("index.html", sites=sites, niches=NICHES,
-                           site_url=SITE_URL)
+                           exch_counts=exch_counts, site_url=SITE_URL)
 
 
 @app.route("/submit", methods=["GET", "POST"])
@@ -679,8 +684,13 @@ def niche_page(niche_name):
     sites = db.execute(
         "SELECT * FROM sites WHERE status='active' AND niche LIKE ? ORDER BY dr DESC",
         (f"%{pretty}%",)).fetchall()
+    exch_counts = {}
+    for row in db.execute(
+            "SELECT site_url, COUNT(*) c FROM sites WHERE status IN ('active','pending') GROUP BY site_url").fetchall():
+        exch_counts[row["site_url"]] = row["c"]
     return render_template("niche.html", sites=sites, pretty=pretty,
-                           niche_name=niche_name, site_url=SITE_URL)
+                           niche_name=niche_name, exch_counts=exch_counts,
+                           site_url=SITE_URL)
 
 
 # ============ PROGRAMMATIC SEO PAGES ============
@@ -731,9 +741,6 @@ def _prog_page(prog_type, niche_slug):
     data = get_niche_data(niche_slug)
     db = get_db()
     pretty = data["name"]
-    sites = db.execute(
-        "SELECT * FROM sites WHERE status='active' AND niche LIKE ? ORDER BY dr DESC",
-        (f"%{pretty}%",)).fetchall()
     t = PROG_TYPES[prog_type]
     # title pattern per type
     if prog_type == "link-exchange-in":
@@ -742,9 +749,17 @@ def _prog_page(prog_type, niche_slug):
     else:
         title = f"Free Backlinks for {pretty} Sites – 2026 Guide | TWH"
         desc = f"Get free backlinks for {pretty} sites in 2026. Link exchanges, free directories, and content strategies to build {pretty} authority at zero cost."
+    sites = db.execute(
+        "SELECT * FROM sites WHERE status='active' AND niche LIKE ? ORDER BY dr DESC",
+        (f"%{pretty}%",)).fetchall()
+    exch_counts = {}
+    for row in db.execute(
+            "SELECT site_url, COUNT(*) c FROM sites WHERE status IN ('active','pending') GROUP BY site_url").fetchall():
+        exch_counts[row["site_url"]] = row["c"]
     return render_template("prog.html", data=data, t=t, sites=sites,
                            pretty=pretty, prog_type=prog_type, niche_slug=niche_slug,
-                           title=title, desc=desc, site_url=SITE_URL)
+                           title=title, desc=desc, exch_counts=exch_counts,
+                           site_url=SITE_URL)
 
 
 @app.route("/site/<int:site_id>/")
@@ -753,7 +768,12 @@ def site_page(site_id):
     s = db.execute("SELECT * FROM sites WHERE id=? AND status='active'", (site_id,)).fetchone()
     if not s:
         return "Site not found", 404
-    return render_template("site.html", s=s, site_url=SITE_URL)
+    # all people who registered/submitted this domain (sellers/partners)
+    sellers = db.execute(
+        "SELECT site_name, email, dr, da, traffic, status, owner_verified, created_at "
+        "FROM sites WHERE site_url=? ORDER BY owner_verified DESC, dr DESC",
+        (s["site_url"],)).fetchall()
+    return render_template("site.html", s=s, sellers=sellers, site_url=SITE_URL)
 
 
 @app.route("/api/sites")
