@@ -279,23 +279,71 @@ def exchange(site_id):
         if site["email"] and your_email:
             mail_ok, mail_err = send_mail(
                 site["email"],
-                f"🔗 New Link Exchange Request for {site['site_name']}",
-                f"""<div style="font-family:Arial,sans-serif;max-width:560px;margin:auto;border:1px solid #e3e8f2;border-radius:12px;overflow:hidden">
-  <div style="background:linear-gradient(135deg,#2f7cf6,#6c5ce7);padding:20px 24px">
-    <h2 style="color:#fff;margin:0;font-size:20px">🔗 New Link Exchange Request</h2>
+                f"🔗 New Link Exchange Request – {site['site_name']}",
+                f"""<!DOCTYPE html>
+<html><body style="margin:0;padding:0;background:#f4f6fb;font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif">
+<div style="max-width:600px;margin:0 auto;padding:24px 16px">
+
+  <!-- Header -->
+  <div style="background:linear-gradient(135deg,#1a3a8f 0%,#2f7cf6 55%,#6c5ce7 100%);border-radius:16px 16px 0 0;padding:32px 36px;text-align:center">
+    <div style="font-size:44px;line-height:1">🔗</div>
+    <h1 style="color:#ffffff;margin:12px 0 6px;font-size:22px;font-weight:800;letter-spacing:-.2px">New Link Exchange Request</h1>
+    <p style="color:rgba(255,255,255,.85);margin:0;font-size:14px">Someone wants to swap backlinks with <b style="color:#fff">{site['site_name']}</b></p>
   </div>
-  <div style="padding:24px">
-    <p style="color:#0f1b33;font-size:15px">Your site <b>{site['site_name']}</b> (<a href="https://{site['site_url']}" style="color:#2f7cf6">{site['site_url']}</a>) received a link exchange request:</p>
-    <table style="width:100%;border-collapse:collapse;margin:16px 0">
-      <tr><td style="padding:8px 12px;background:#f5f8ff;font-weight:bold;width:120px">Requested by</td><td style="padding:8px 12px">{your_name}</td></tr>
-      <tr><td style="padding:8px 12px;background:#f5f8ff;font-weight:bold">Their site</td><td style="padding:8px 12px"><a href="https://{your_site}" style="color:#2f7cf6">{your_site}</a></td></tr>
-      <tr><td style="padding:8px 12px;background:#f5f8ff;font-weight:bold">Reply to</td><td style="padding:8px 12px"><a href="mailto:{your_email}" style="color:#2f7cf6">{your_email}</a></td></tr>
-      <tr><td style="padding:8px 12px;background:#f5f8ff;font-weight:bold">Message</td><td style="padding:8px 12px">{message or '—'}</td></tr>
-    </table>
-    <p style="font-size:14px;color:#5a6b85">Reply directly to this email to start the exchange. Adding their link and asking them to add yours keeps the exchange mutual.</p>
-    <p style="font-size:12px;color:#8a97ad">Sent via TWH Link Exchange Directory · {SITE_URL}/link-exchange/</p>
+
+  <!-- Body -->
+  <div style="background:#ffffff;border-radius:0 0 16px 16px;padding:36px;box-shadow:0 8px 32px rgba(15,27,51,.08)">
+
+    <!-- Hero site info -->
+    <div style="background:#f5f8ff;border:1px solid #e3ebff;border-radius:12px;padding:18px 20px;margin-bottom:24px;display:flex;align-items:center;gap:14px">
+      <div style="width:44px;height:44px;border-radius:10px;background:linear-gradient(135deg,#2f7cf6,#6c5ce7);display:flex;align-items:center;justify-content:center;color:#fff;font-size:20px;font-weight:800;flex-shrink:0">🔗</div>
+      <div>
+        <div style="font-weight:700;color:#0f1b33;font-size:15px">{site['site_name']}</div>
+        <div style="color:#5a6b85;font-size:13px">{site['site_url']} · DR {site['dr'] or '—'} · DA {site['da'] or '—'}</div>
+      </div>
+    </div>
+
+    <!-- Request details card -->
+    <div style="border:1px solid #e3e8f2;border-radius:12px;overflow:hidden;margin-bottom:24px">
+      <div style="background:#f8faff;padding:12px 20px;font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:#2f7cf6;border-bottom:1px solid #e3e8f2">Request Details</div>
+      <table style="width:100%;border-collapse:collapse;font-size:14px">
+        <tr>
+          <td style="padding:12px 20px;color:#5a6b85;width:110px;font-weight:600;vertical-align:top">Requested by</td>
+          <td style="padding:12px 20px;color:#0f1b33;font-weight:600">{your_name or '—'}</td>
+        </tr>
+        <tr style="background:#fafbfe">
+          <td style="padding:12px 20px;color:#5a6b85;font-weight:600;vertical-align:top">Their website</td>
+          <td style="padding:12px 20px;color:#2f7cf6;font-weight:600"><a href="https://{your_site}" style="color:#2f7cf6;text-decoration:none">{your_site or '—'}</a></td>
+        </tr>
+        <tr>
+          <td style="padding:12px 20px;color:#5a6b85;font-weight:600;vertical-align:top">Reply to</td>
+          <td style="padding:12px 20px;color:#2f7cf6;font-weight:600"><a href="mailto:{your_email}" style="color:#2f7cf6;text-decoration:none">{your_email or '—'}</a></td>
+        </tr>
+        <tr style="background:#fafbfe">
+          <td style="padding:12px 20px;color:#5a6b85;font-weight:600;vertical-align:top">Message</td>
+          <td style="padding:12px 20px;color:#3a4a63;line-height:1.6">{message or '—'}</td>
+        </tr>
+      </table>
+    </div>
+
+    <!-- CTA -->
+    <div style="text-align:center;margin-bottom:20px">
+      <a href="mailto:{your_email}?subject=Re:%20Link%20Exchange%20with%20{your_site}" style="display:inline-block;background:linear-gradient(135deg,#2f7cf6,#6c5ce7);color:#fff;text-decoration:none;padding:14px 32px;border-radius:50px;font-size:15px;font-weight:700;letter-spacing:.2px">Reply to Start Exchange →</a>
+    </div>
+
+    <!-- Tip -->
+    <div style="background:#fff8e6;border:1px solid #ffe4a1;border-radius:10px;padding:14px 18px;font-size:13px;color:#7a6500;line-height:1.6;margin-bottom:24px">
+      💡 <b>Tip:</b> Add their link to a relevant page on your site, then ask them to add yours. Keep exchanges niche-relevant and under 10% of your total backlink profile for best SEO results.
+    </div>
+
+    <!-- Footer -->
+    <div style="text-align:center;padding-top:16px;border-top:1px solid #eef1f7">
+      <p style="font-size:12px;color:#8a97ad;margin:0 0 4px">Sent via <b style="color:#2f7cf6">TWH Link Exchange Directory</b></p>
+      <p style="font-size:12px;color:#aab4c6;margin:0"><a href="{SITE_URL}/link-exchange/" style="color:#aab4c6;text-decoration:none">thewebhospitality.com/link-exchange</a></p>
+    </div>
   </div>
-</div>""")
+</div>
+</body></html>""")
         msg = "✅ Request sent! The site owner will contact you. (For faster results, try our guest post service below.)"
         if your_email and mail_ok:
             msg = "✅ Request sent! The site owner has been notified by email and will contact you. (For faster results, try our guest post service below.)"
