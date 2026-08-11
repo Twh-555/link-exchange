@@ -16,6 +16,17 @@ import sqlite3
 from datetime import datetime
 from pathlib import Path
 
+# load .env if present (SMTP creds etc.)
+try:
+    with open(Path(__file__).resolve().parent / ".env") as _envf:
+        for _line in _envf:
+            _line = _line.strip()
+            if _line and not _line.startswith("#") and "=" in _line:
+                _k, _v = _line.split("=", 1)
+                os.environ.setdefault(_k.strip(), _v.strip().strip('"').strip("'"))
+except FileNotFoundError:
+    pass
+
 import requests
 from flask import Flask, g, jsonify, redirect, render_template, request, url_for
 
@@ -42,6 +53,41 @@ CONTACT_EMAIL = os.environ.get("CONTACT_EMAIL", "hello@thewebhospitality.com")
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "change-me-in-production")
+
+# ---------- Email config (SMTP) ----------
+SMTP_HOST = os.environ.get("SMTP_HOST", "")
+SMTP_PORT = int(os.environ.get("SMTP_PORT", "587"))
+SMTP_USER = os.environ.get("SMTP_USER", "")
+SMTP_PASS = os.environ.get("SMTP_PASS", "")
+MAIL_FROM = os.environ.get("MAIL_FROM", SMTP_USER or "no-reply@thewebhospitality.com")
+
+
+def send_mail(to_email, subject, html_body):
+    """Send email via SMTP. Returns (ok, error). Skips silently if SMTP not configured."""
+    if not SMTP_HOST or not SMTP_USER or not SMTP_PASS:
+        return False, "SMTP not configured (set SMTP_HOST/SMTP_USER/SMTP_PASS)"
+    try:
+        import smtplib
+        from email.mime.multipart import MIMEMultipart
+        from email.mime.text import MIMEText
+        msg = MIMEMultipart("alternative")
+        msg["Subject"] = subject
+        msg["From"] = MAIL_FROM
+        msg["To"] = to_email
+        msg.attach(MIMEText(html_body, "html"))
+        if SMTP_PORT == 465:
+            server = smtplib.SMTP_SSL(SMTP_HOST, SMTP_PORT, timeout=15)
+        else:
+            server = smtplib.SMTP(SMTP_HOST, SMTP_PORT, timeout=15)
+            server.ehlo()
+            if SMTP_PORT == 587:
+                server.starttls()
+        server.login(SMTP_USER, SMTP_PASS)
+        server.sendmail(MAIL_FROM, [to_email], msg.as_string())
+        server.quit()
+        return True, ""
+    except Exception as e:
+        return False, str(e)
 
 NICHES = [
     "All", "Astrology / Esotericism", "Business / Finance", "City Portals",
@@ -218,14 +264,41 @@ def exchange(site_id):
     msg = ""
     if request.method == "POST":
         f = request.form
+        your_name = f.get("your_name", "").strip()
+        your_email = f.get("your_email", "").strip()
+        your_site = f.get("your_site", "").strip()
+        message = f.get("message", "").strip()
         db.execute(
             "INSERT INTO exchanges (from_site_id, to_site_id, message, status, created_at)"
             " VALUES (?,?,?, 'pending', ?)",
-            (0, site_id, f"{f.get('your_name','')} | {f.get('your_email','')} | "
-             f"{f.get('your_site','')}: {f.get('message','')}",
+            (0, site_id, f"{your_name} | {your_email} | {your_site}: {message}",
              datetime.utcnow().isoformat()))
         db.commit()
+        # email notification to site owner
+        mail_ok, mail_err = False, ""
+        if site["email"] and your_email:
+            mail_ok, mail_err = send_mail(
+                site["email"],
+                f"🔗 New Link Exchange Request for {site['site_name']}",
+                f"""<div style="font-family:Arial,sans-serif;max-width:560px;margin:auto;border:1px solid #e3e8f2;border-radius:12px;overflow:hidden">
+  <div style="background:linear-gradient(135deg,#2f7cf6,#6c5ce7);padding:20px 24px">
+    <h2 style="color:#fff;margin:0;font-size:20px">🔗 New Link Exchange Request</h2>
+  </div>
+  <div style="padding:24px">
+    <p style="color:#0f1b33;font-size:15px">Your site <b>{site['site_name']}</b> (<a href="https://{site['site_url']}" style="color:#2f7cf6">{site['site_url']}</a>) received a link exchange request:</p>
+    <table style="width:100%;border-collapse:collapse;margin:16px 0">
+      <tr><td style="padding:8px 12px;background:#f5f8ff;font-weight:bold;width:120px">Requested by</td><td style="padding:8px 12px">{your_name}</td></tr>
+      <tr><td style="padding:8px 12px;background:#f5f8ff;font-weight:bold">Their site</td><td style="padding:8px 12px"><a href="https://{your_site}" style="color:#2f7cf6">{your_site}</a></td></tr>
+      <tr><td style="padding:8px 12px;background:#f5f8ff;font-weight:bold">Reply to</td><td style="padding:8px 12px"><a href="mailto:{your_email}" style="color:#2f7cf6">{your_email}</a></td></tr>
+      <tr><td style="padding:8px 12px;background:#f5f8ff;font-weight:bold">Message</td><td style="padding:8px 12px">{message or '—'}</td></tr>
+    </table>
+    <p style="font-size:14px;color:#5a6b85">Reply directly to this email to start the exchange. Adding their link and asking them to add yours keeps the exchange mutual.</p>
+    <p style="font-size:12px;color:#8a97ad">Sent via TWH Link Exchange Directory · {SITE_URL}/link-exchange/</p>
+  </div>
+</div>""")
         msg = "✅ Request sent! The site owner will contact you. (For faster results, try our guest post service below.)"
+        if your_email and mail_ok:
+            msg = "✅ Request sent! The site owner has been notified by email and will contact you. (For faster results, try our guest post service below.)"
     return render_template("exchange.html", site=site, msg=msg, site_url=SITE_URL)
 
 
