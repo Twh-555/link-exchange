@@ -108,33 +108,41 @@
   </select>
 </div>
 
-<!-- Directory Grid -->
-<div class="directory-grid" id="grid">
-  {% for s in sites %}
-  <div class="site-card" data-name="{{ s.site_name.lower() }}" data-niche="{{ s.niche }}">
-    <div class="site-card-top">
-      <h3><a href="{{ s.site_url }}" target="_blank" rel="nofollow">{{ s.site_name }}</a></h3>
+<!-- Directory Grid (name-blur gate: submit your site to unlock) -->
+<div class="gate-banner" id="gateBanner">
+  <i class="fa-solid fa-lock"></i>
+  <span><strong>Submit your site to see sites available for link exchange</strong> — site names are hidden until you add your website.</span>
+  <a class="btn btn-primary btn-sm" href="{{ url_for('submit') }}"><i class="fa-solid fa-plus"></i> Submit Your Site</a>
+</div>
+
+<div class="directory-wrap locked" id="directoryWrap">
+  <div class="directory-grid" id="grid">
+    {% for s in sites %}
+    <div class="site-card" data-name="{{ s.site_name.lower() }}" data-niche="{{ s.niche }}">
+      <div class="site-card-top">
+        <h3><a class="site-name-lock" href="{{ s.site_url }}" target="_blank" rel="nofollow">{{ s.site_name }}</a></h3>
+      </div>
+      <p class="desc">{{ s.description[:100] }}</p>
+      <div class="site-meta">
+        <span class="badge-tag tag-dr">DR {{ s.dr }}</span>
+        <span class="badge-tag tag-da">DA {{ s.da }}</span>
+        {% for n in (s.niche or '').split(', ') %}
+          {% if n %}<span class="badge-tag tag-niche">{{ n }}</span>{% endif %}
+        {% endfor %}
+        <span class="badge-tag tag-free">Link Exchange</span>
+      </div>
+      <div class="site-actions">
+        <a class="btn btn-primary btn-sm" href="{{ url_for('exchange', site_id=s.id) }}"><i class="fa-solid fa-arrow-right-arrow-left"></i> Request Exchange</a>
+        <a class="btn btn-primary btn-outline btn-sm" href="{{ url_for('site_page', site_id=s.id) }}"><i class="fa-solid fa-eye"></i> Profile</a>
+      </div>
     </div>
-    <p class="desc">{{ s.description[:100] }}</p>
-    <div class="site-meta">
-      <span class="badge-tag tag-dr">DR {{ s.dr }}</span>
-      <span class="badge-tag tag-da">DA {{ s.da }}</span>
-      {% for n in (s.niche or '').split(', ') %}
-        {% if n %}<span class="badge-tag tag-niche">{{ n }}</span>{% endif %}
-      {% endfor %}
-      <span class="badge-tag tag-free">Link Exchange</span>
+    {% else %}
+    <div class="empty-state" style="grid-column:1/-1">
+      <i class="fa-solid fa-link-slash"></i>
+      <p>No sites yet — be the first to <a href="{{ url_for('submit') }}">add your site</a>!</p>
     </div>
-    <div class="site-actions">
-      <a class="btn btn-primary btn-sm" href="{{ url_for('exchange', site_id=s.id) }}"><i class="fa-solid fa-arrow-right-arrow-left"></i> Request Exchange</a>
-      <a class="btn btn-primary btn-outline btn-sm" href="{{ url_for('site_page', site_id=s.id) }}"><i class="fa-solid fa-eye"></i> Profile</a>
-    </div>
+    {% endfor %}
   </div>
-  {% else %}
-  <div class="empty-state" style="grid-column:1/-1">
-    <i class="fa-solid fa-link-slash"></i>
-    <p>No sites yet — be the first to <a href="{{ url_for('submit') }}">add your site</a>!</p>
-  </div>
-  {% endfor %}
 </div>
 
 <!-- SEO Content -->
@@ -304,5 +312,20 @@
     });
   }
   q.addEventListener('input',filter); n.addEventListener('change',filter);
+
+  // ===== Name-blur gate: submit your site to unlock names =====
+  (function(){
+    const wrap = document.getElementById('directoryWrap');
+    const banner = document.getElementById('gateBanner');
+    if (!wrap || !banner) return;
+    const unlocked = localStorage.getItem('lex_unlocked') === '1';
+    if (unlocked) {
+      wrap.classList.remove('locked');
+      banner.style.display = 'none';
+    } else {
+      wrap.classList.add('locked');
+      banner.style.display = 'flex';
+    }
+  })();
 </script>
 {% endblock %}

@@ -1889,3 +1889,23 @@ textarea.form-control {
   .ms-options{max-height:40vh}
   .ms-search{font-size:16px}
 }
+
+/* ============ Directory Blur Gate (add your site to unlock) ============ */
+.directory-wrap{position:relative}
+.directory-wrap.locked .directory-grid{filter:blur(6px);pointer-events:none;user-select:none}
+.unlock-overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;z-index:20;background:rgba(255,255,255,.55);border-radius:16px;padding:24px}
+.dark .unlock-overlay{background:rgba(15,20,35,.6)}
+.unlock-card{background:var(--card-bg,#fff);border:1px solid var(--border,#e3e8f2);border-radius:16px;padding:32px;text-align:center;max-width:420px;box-shadow:0 16px 48px rgba(15,27,51,.16)}
+.unlock-card .lock-icon{width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,#2f7cf6,#6c5ce7);color:#fff;display:flex;align-items:center;justify-content:center;font-size:1.6rem;margin:0 auto 16px}
+.unlock-card h3{font-size:1.2rem;margin-bottom:8px;color:var(--dark,#0f1b33)}
+.unlock-card p{font-size:.9rem;color:var(--muted,#5a6b85);margin-bottom:18px;line-height:1.6}
+.unlock-card .btn{margin:4px}
+.locked-badge{display:inline-flex;align-items:center;gap:6px;background:#fff3cd;color:#8a6d00;border:1px solid #ffe4a1;border-radius:20px;padding:4px 14px;font-size:.78rem;font-weight:700;margin-bottom:14px}
+
+/* ============ Name-only blur gate (v2) ============ */
+.directory-wrap.locked .site-name-lock{filter:blur(6px);pointer-events:none;user-select:none;cursor:not-allowed}
+.directory-wrap.locked .site-card .site-actions a.btn-outline{pointer-events:none;opacity:.6}
+.gate-banner{display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap;background:linear-gradient(135deg,#eef4ff,#e8f0fe);border:1px solid #cfe0ff;border-radius:12px;padding:14px 20px;margin-bottom:20px;font-size:.92rem;color:var(--dark,#0f1b33)}
+.gate-banner i{color:var(--accent,#2f7cf6)}
+.gate-banner .btn{margin:0}
+.dark .gate-banner{background:rgba(47,124,246,.12);border-color:rgba(47,124,246,.3)}
