@@ -188,8 +188,11 @@ def close_db(exc):
 # ---------- helpers ----------
 
 def normalize_url(url: str) -> str:
-    url = url.strip().replace("http://", "").replace("https://", "").strip("/")
-    return url.lower()
+    url = url.strip().lower()
+    url = url.replace("http://", "").replace("https://", "").strip("/")
+    if url.startswith("www."):
+        url = url[4:]
+    return url
 
 
 def fetch_dr_da(domain: str) -> tuple[int, int]:
@@ -251,44 +254,61 @@ def submit():
         if not valid:
             msg = f"❌ {err}"
         else:
-            # multi-niche: select 3-5 niches (getlist returns list)
-            niches = [n for n in f.getlist("niche") if n and n != "All"]
-            niches = list(dict.fromkeys(niches))  # dedupe preserve order
-            if len(niches) < 1:
-                msg = "❌ Please select at least 1 niche."
-                ok = False
-            elif len(niches) > 5:
-                msg = "❌ Please select at most 5 niches."
+            # ---- duplicate detection: same site already submitted? ----
+            dup = db.execute(
+                "SELECT * FROM sites WHERE site_url=? ORDER BY id DESC LIMIT 1",
+                (site_url,)).fetchone()
+            if dup:
+                if dup["status"] == "active":
+                    msg = (f"❌ {dup['site_name']} is already listed in the directory "
+                           f"(DR {dup['dr']}). Only one listing per website is allowed — "
+                           "no need to submit again.")
+                elif dup["status"] == "pending":
+                    msg = (f"❌ This website is already submitted and pending review "
+                           f"(submitted {dup['created_at'][:10]}). We'll notify the owner once it's approved.")
+                else:
+                    msg = (f"❌ This website was already submitted and is not eligible for "
+                           "a new listing. Contact us if you believe this is a mistake.")
                 ok = False
             else:
-                # DR + DA mandatory
-                try:
-                    dr = int(f.get("dr", "").strip())
-                    da = int(f.get("da", "").strip())
-                except ValueError:
-                    dr = da = None
-                if dr is None or da is None:
-                    msg = "❌ DR and DA are mandatory. Please enter both values (0-100)."
+                # multi-niche: select 3-5 niches (getlist returns list)
+                niches = [n for n in f.getlist("niche") if n and n != "All"]
+                niches = list(dict.fromkeys(niches))  # dedupe preserve order
+                if len(niches) < 1:
+                    msg = "❌ Please select at least 1 niche."
                     ok = False
-                elif not (0 <= dr <= 100 and 0 <= da <= 100):
-                    msg = "❌ DR and DA must be between 0 and 100."
+                elif len(niches) > 5:
+                    msg = "❌ Please select at most 5 niches."
                     ok = False
                 else:
-                    niche_str = ", ".join(niches)
-                    token = secrets.token_urlsafe(16)
-                    password = secrets.token_urlsafe(6)  # e.g. "xY3kPq_RsT"
-                    verify_token = secrets.token_urlsafe(24)
-                    verify_expires = (datetime.utcnow() +
-                                      timedelta(hours=24)).isoformat()
-                    db.execute(
-                        "INSERT INTO sites (site_name, site_url, email, niche, description, dr, da, traffic, status, token, password, verified, verify_token, verify_expires, created_at)"
-                        " VALUES (?,?,?,?,?,?,?,?, 'pending', ?, ?, 0, ?, ?, ?)",
-                        (f.get("site_name", "").strip()[:60], site_url, email,
-                         niche_str, f.get("description", "").strip()[:200],
-                         min(dr, 100), min(da, 100),
-                         f.get("traffic", "").strip()[:60],
-                         token, password, verify_token, verify_expires,
-                         datetime.utcnow().isoformat()))
+                    # DR + DA mandatory
+                    try:
+                        dr = int(f.get("dr", "").strip())
+                        da = int(f.get("da", "").strip())
+                    except ValueError:
+                        dr = da = None
+                    if dr is None or da is None:
+                        msg = "❌ DR and DA are mandatory. Please enter both values (0-100)."
+                        ok = False
+                    elif not (0 <= dr <= 100 and 0 <= da <= 100):
+                        msg = "❌ DR and DA must be between 0 and 100."
+                        ok = False
+                    else:
+                        niche_str = ", ".join(niches)
+                        token = secrets.token_urlsafe(16)
+                        password = secrets.token_urlsafe(6)  # e.g. "xY3kPq_RsT"
+                        verify_token = secrets.token_urlsafe(24)
+                        verify_expires = (datetime.utcnow() +
+                                          timedelta(hours=24)).isoformat()
+                        db.execute(
+                            "INSERT INTO sites (site_name, site_url, email, niche, description, dr, da, traffic, status, token, password, verified, verify_token, verify_expires, created_at)"
+                            " VALUES (?,?,?,?,?,?,?,?, 'pending', ?, ?, 0, ?, ?, ?)",
+                            (f.get("site_name", "").strip()[:60], site_url, email,
+                             niche_str, f.get("description", "").strip()[:200],
+                             min(dr, 100), min(da, 100),
+                             f.get("traffic", "").strip()[:60],
+                             token, password, verify_token, verify_expires,
+                             datetime.utcnow().isoformat()))
                     db.commit()
                     msg = "✅ Site submitted! Please verify your email — check your inbox for the verification link. Once verified, our team reviews your listing."
                     ok = True
