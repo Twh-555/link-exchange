@@ -1,0 +1,79 @@
+{% extends 'base.html' %}
+{% block title %}Listing Status – {% if found %}{{ site.site_name }}{% else %}Not Found{% endif %} | TWH Link Exchange{% endblock %}
+{% block canonical %}{{ site_url }}/link-exchange/{% endblock %}
+{% block robots %}noindex, follow{% endblock %}
+{% block meta_desc %}Check the review status of your link exchange listing on TWH.{% endblock %}
+
+{% block content %}
+<section class="hero-section text-center">
+  <div class="hero-badge"><i class="fa-solid fa-magnifying-glass-chart"></i> Listing Status</div>
+  <h1 class="page-title"><span class="gradient-text">{% if found %}{{ site.site_name }} – Submission Status{% else %}Listing Not Found{% endif %}</span></h1>
+</section>
+
+{% if found %}
+<div class="generator-grid" style="max-width:560px;margin:24px auto;grid-template-columns:1fr">
+  <div class="calc-card" style="text-align:center">
+    {% if site.status == 'active' %}
+    <div style="width:76px;height:76px;border-radius:50%;background:#e8f5e9;display:flex;align-items:center;justify-content:center;margin:0 auto 16px">
+      <i class="fa-solid fa-circle-check" style="font-size:2.2rem;color:#0a7a3d"></i>
+    </div>
+    <h2 style="color:#0a7a3d;margin-bottom:8px">✅ Approved & Live!</h2>
+    <p style="color:var(--muted,#5a6b85);line-height:1.7">
+      Your site is now listed in the <a href="{{ site_url }}/link-exchange/">link exchange directory</a>.
+      Other site owners can send you exchange requests at <b>{{ site.email }}</b>.
+    </p>
+    {% elif site.status == 'rejected' %}
+    <div style="width:76px;height:76px;border-radius:50%;background:#fdecea;display:flex;align-items:center;justify-content:center;margin:0 auto 16px">
+      <i class="fa-solid fa-circle-xmark" style="font-size:2.2rem;color:#d32f2f"></i>
+    </div>
+    <h2 style="color:#d32f2f;margin-bottom:8px">❌ Submission Rejected</h2>
+    <p style="color:var(--muted,#5a6b85);line-height:1.7">
+      We couldn't approve this listing. Contact us at
+      <a href="mailto:{{ site_url.replace('https://','') }}">{{ site_url.replace('https://','') }}</a>
+      if you think this is a mistake.
+    </p>
+    {% else %}
+    <div style="width:76px;height:76px;border-radius:50%;background:#fff8e6;display:flex;align-items:center;justify-content:center;margin:0 auto 16px">
+      <i class="fa-solid fa-clock" style="font-size:2.2rem;color:#b8860b"></i>
+    </div>
+    <h2 style="color:#b8860b;margin-bottom:8px">⏳ Pending Review</h2>
+    <p style="color:var(--muted,#5a6b85);line-height:1.7">
+      Your listing is being reviewed by our team — usually within <b>24 hours</b>.
+      Check this page again soon, or we'll notify you by email.
+    </p>
+    {% endif %}
+
+    <div style="border-top:1px solid var(--border,#e3e8f2);margin-top:20px;padding-top:16px;text-align:left">
+      <table style="width:100%;font-size:.9rem">
+        <tr><td style="padding:6px 0;color:var(--muted,#5a6b85)">Site</td><td style="padding:6px 0;font-weight:700;text-align:right">{{ site.site_name }}</td></tr>
+        <tr><td style="padding:6px 0;color:var(--muted,#5a6b85)">URL</td><td style="padding:6px 0;font-weight:700;text-align:right">{{ site.site_url }}</td></tr>
+        <tr><td style="padding:6px 0;color:var(--muted,#5a6b85)">Niches</td><td style="padding:6px 0;font-weight:700;text-align:right">{{ site.niche }}</td></tr>
+        <tr><td style="padding:6px 0;color:var(--muted,#5a6b85)">DR / DA</td><td style="padding:6px 0;font-weight:700;text-align:right">{{ site.dr }} / {{ site.da }}</td></tr>
+        <tr><td style="padding:6px 0;color:var(--muted,#5a6b85)">Submitted</td><td style="padding:6px 0;font-weight:700;text-align:right">{{ site.created_at[:10] }}</td></tr>
+      </table>
+    </div>
+
+    <div style="margin-top:20px">
+      <a class="btn btn-primary" href="{{ site_url }}/link-exchange/"><i class="fa-solid fa-layer-group"></i> Browse Directory</a>
+    </div>
+  </div>
+</div>
+{% else %}
+<div class="generator-grid" style="max-width:480px;margin:24px auto;grid-template-columns:1fr">
+  <div class="calc-card" style="text-align:center">
+    <div style="width:76px;height:76px;border-radius:50%;background:#f5f7fb;display:flex;align-items:center;justify-content:center;margin:0 auto 16px">
+      <i class="fa-solid fa-magnifying-glass" style="font-size:2rem;color:#8a97ad"></i>
+    </div>
+    <h2 style="color:var(--dark,#0f1b33);margin-bottom:8px">No Listing Found</h2>
+    <p style="color:var(--muted,#5a6b85);line-height:1.7">
+      The link you used is invalid or expired. If you just submitted your site,
+      check your inbox for the welcome email with your status link.
+    </p>
+    <div style="margin-top:20px">
+      <a class="btn btn-primary" href="{{ url_for('submit') }}"><i class="fa-solid fa-plus"></i> Add Your Site</a>
+      <a class="btn btn-primary btn-outline" href="{{ site_url }}/link-exchange/"><i class="fa-solid fa-layer-group"></i> Browse Directory</a>
+    </div>
+  </div>
+</div>
+{% endif %}
+{% endblock %}

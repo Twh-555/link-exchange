@@ -12,6 +12,7 @@ Tech: Flask + SQLite, single-file, deploy anywhere (Render free tier ok).
 """
 import os
 import re
+import secrets
 import sqlite3
 from datetime import datetime
 from pathlib import Path
@@ -135,6 +136,7 @@ CREATE TABLE IF NOT EXISTS sites (
     da INTEGER DEFAULT 0,
     traffic TEXT DEFAULT '',
     status TEXT DEFAULT 'pending',   -- pending | active | rejected
+    token TEXT DEFAULT '',
     created_at TEXT NOT NULL,
     approved_at TEXT
 );
@@ -154,10 +156,12 @@ def get_db():
         g.db = sqlite3.connect(DB_PATH)
         g.db.row_factory = sqlite3.Row
         g.db.executescript(SCHEMA)
-        # migration: ensure traffic column exists (older DBs)
+        # migration: ensure traffic + token columns exist (older DBs)
         cols = [r[1] for r in g.db.execute("PRAGMA table_info(sites)").fetchall()]
         if "traffic" not in cols:
             g.db.execute("ALTER TABLE sites ADD COLUMN traffic TEXT DEFAULT ''")
+        if "token" not in cols:
+            g.db.execute("ALTER TABLE sites ADD COLUMN token TEXT DEFAULT ''")
         g.db.commit()
     return g.db
 
@@ -258,19 +262,93 @@ def submit():
                     ok = False
                 else:
                     niche_str = ", ".join(niches)
+                    token = secrets.token_urlsafe(16)
                     db.execute(
-                        "INSERT INTO sites (site_name, site_url, email, niche, description, dr, da, traffic, status, created_at)"
-                        " VALUES (?,?,?,?,?,?,?,?, 'pending', ?)",
+                        "INSERT INTO sites (site_name, site_url, email, niche, description, dr, da, traffic, status, token, created_at)"
+                        " VALUES (?,?,?,?,?,?,?,?, 'pending', ?, ?)",
                         (f.get("site_name", "").strip()[:60], site_url, email,
                          niche_str, f.get("description", "").strip()[:200],
                          min(dr, 100), min(da, 100),
                          f.get("traffic", "").strip()[:60],
-                         datetime.utcnow().isoformat()))
+                         token, datetime.utcnow().isoformat()))
                     db.commit()
                     msg = "✅ Site submitted! Our team will review it — once approved, your site appears in the directory for link exchanges."
                     ok = True
+                    # welcome email with status-check link
+                    status_link = f"{SITE_URL}/link-exchange/status/{token}"
+                    if email:
+                        send_mail(
+                            email,
+                            f"🎉 Welcome to TWH Link Exchange – {f.get('site_name','').strip()[:40]} Submitted!",
+                            f"""<!DOCTYPE html>
+<html><body style="margin:0;padding:0;background:#f4f6fb;font-family:Arial,sans-serif">
+<center style="width:100%">
+<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#f4f6fb;padding:24px 0">
+<tr><td align="center">
+<table role="presentation" width="600" cellspacing="0" cellpadding="0" border="0" style="max-width:600px;width:100%">
+  <tr>
+    <td align="center" style="background:linear-gradient(135deg,#1a3a8f 0%,#2f7cf6 55%,#6c5ce7 100%);border-radius:16px 16px 0 0;padding:32px 24px">
+      <div style="font-size:40px;line-height:1">🎉</div>
+      <h1 style="color:#ffffff;margin:12px 0 6px;font-size:22px;font-weight:800;font-family:Arial,sans-serif">Welcome to TWH Link Exchange!</h1>
+      <p style="color:rgba(255,255,255,.9);margin:0;font-size:14px;font-family:Arial,sans-serif">Your website is under review</p>
+    </td>
+  </tr>
+  <tr>
+    <td style="background:#ffffff;border-radius:0 0 16px 16px;padding:28px 24px">
+      <p style="font-size:15px;color:#0f1b33;line-height:1.6;margin:0 0 16px;font-family:Arial,sans-serif">Hi there,</p>
+      <p style="font-size:14px;color:#3a4a63;line-height:1.7;margin:0 0 20px;font-family:Arial,sans-serif">
+        Thanks for submitting <b>{f.get('site_name','').strip()[:60]}</b> to the TWH Link Exchange directory!
+        Our team is reviewing your listing — usually within 24 hours.
+      </p>
+
+      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="border:1px solid #e3e8f2;border-radius:12px;margin-bottom:20px">
+        <tr><td style="background:#f8faff;padding:12px 20px;font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:#2f7cf6;border-bottom:1px solid #e3e8f2;border-radius:12px 12px 0 0;font-family:Arial,sans-serif">Your Submission</td></tr>
+        <tr><td style="padding:12px 20px 2px;color:#5a6b85;font-weight:600;font-size:13px;font-family:Arial,sans-serif">Site</td></tr>
+        <tr><td style="padding:2px 20px 12px;color:#0f1b33;font-weight:700;font-size:14px;font-family:Arial,sans-serif">{f.get('site_name','').strip()[:60]}</td></tr>
+        <tr style="background:#fafbfe"><td style="padding:12px 20px 2px;color:#5a6b85;font-weight:600;font-size:13px;font-family:Arial,sans-serif">URL</td></tr>
+        <tr style="background:#fafbfe"><td style="padding:2px 20px 12px;color:#2f7cf6;font-weight:700;font-size:14px;font-family:Arial,sans-serif">{site_url}</td></tr>
+        <tr><td style="padding:12px 20px 2px;color:#5a6b85;font-weight:600;font-size:13px;font-family:Arial,sans-serif">Niches</td></tr>
+        <tr><td style="padding:2px 20px 12px;color:#0f1b33;font-weight:700;font-size:14px;font-family:Arial,sans-serif">{niche_str}</td></tr>
+        <tr style="background:#fafbfe"><td style="padding:12px 20px 2px;color:#5a6b85;font-weight:600;font-size:13px;font-family:Arial,sans-serif">DR / DA</td></tr>
+        <tr style="background:#fafbfe"><td style="padding:2px 20px 14px;color:#0f1b33;font-weight:700;font-size:14px;font-family:Arial,sans-serif">{dr} / {da}</td></tr>
+      </table>
+
+      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#f5f8ff;border:1px solid #e3ebff;border-radius:12px;margin-bottom:20px">
+        <tr><td style="padding:16px 20px">
+          <div style="font-weight:700;color:#0f1b33;font-size:14px;margin-bottom:6px;font-family:Arial,sans-serif">📋 Check your listing status</div>
+          <div style="font-size:13px;color:#5a6b85;line-height:1.6;margin-bottom:10px;font-family:Arial,sans-serif">Use this link anytime to see if your site is <b>Pending</b>, <b>Approved</b> or <b>Rejected</b>:</div>
+          <a href="{status_link}" style="display:inline-block;background:linear-gradient(135deg,#2f7cf6,#6c5ce7);color:#ffffff;text-decoration:none;padding:12px 28px;border-radius:50px;font-size:14px;font-weight:700;font-family:Arial,sans-serif">View My Status →</a>
+        </td></tr>
+      </table>
+
+      <p style="font-size:13px;color:#5a6b85;line-height:1.6;margin:0 0 16px;font-family:Arial,sans-serif">
+        Once approved, your site appears in the directory and other site owners can send you link exchange requests directly by email.
+      </p>
+
+      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="border-top:1px solid #eef1f7;padding-top:16px">
+        <tr><td align="center" style="padding-top:16px">
+          <p style="font-size:12px;color:#8a97ad;margin:0 0 4px;font-family:Arial,sans-serif">Sent via <b style="color:#2f7cf6">TWH Link Exchange Directory</b></p>
+          <p style="font-size:12px;color:#aab4c6;margin:0;font-family:Arial,sans-serif">thewebhospitality.com/link-exchange</p>
+        </td></tr>
+      </table>
+    </td>
+  </tr>
+</table>
+</td></tr>
+</table>
+</center>
+</body></html>""")
     return render_template("submit.html", msg=msg, ok=ok, niches=NICHES,
                             site_url=SITE_URL)
+
+
+@app.route("/status/<token>")
+def status_page(token):
+    db = get_db()
+    site = db.execute("SELECT * FROM sites WHERE token=?", (token,)).fetchone()
+    if not site:
+        return render_template("status.html", found=False, site=None, site_url=SITE_URL)
+    return render_template("status.html", found=True, site=site, site_url=SITE_URL)
 
 
 @app.route("/exchange/<int:site_id>", methods=["GET", "POST"])
