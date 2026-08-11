@@ -173,8 +173,8 @@ def submit():
             # multi-niche: select 3-5 niches (getlist returns list)
             niches = [n for n in f.getlist("niche") if n and n != "All"]
             niches = list(dict.fromkeys(niches))  # dedupe preserve order
-            if len(niches) < 3:
-                msg = "❌ Please select at least 3 niches."
+            if len(niches) < 1:
+                msg = "❌ Please select at least 1 niche."
                 ok = False
             elif len(niches) > 5:
                 msg = "❌ Please select at most 5 niches."

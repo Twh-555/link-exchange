@@ -39,8 +39,8 @@
         <input class="form-control" type="email" name="email" required placeholder="you@email.com">
       </div>
       <div class="form-group">
-        <label class="field-label">Niche (select 3-5)</label>
-        <p class="form-note" style="margin-top:2px"><i class="fa-solid fa-circle-info"></i> Choose at least 3 and at most 5 niches that match your website.</p>
+        <label class="field-label">Niche (select 1-5)</label>
+        <p class="form-note" style="margin-top:2px"><i class="fa-solid fa-circle-info"></i> Choose at least 1 and at most 5 niches that match your website.</p>
         <div class="multi-select" id="nicheSelect">
           <button type="button" class="ms-trigger form-control" id="nicheTrigger" aria-haspopup="listbox" aria-expanded="false">
             <span class="ms-placeholder">Select niches...</span>
@@ -63,7 +63,7 @@
             </div>
           </div>
         </div>
-        <p class="form-note" id="nicheCountNote" style="margin-top:6px"><i class="fa-solid fa-hashtag"></i> Selected: <span id="nicheCount">0</span> / 5 (min 3)</p>
+        <p class="form-note" id="nicheCountNote" style="margin-top:6px"><i class="fa-solid fa-hashtag"></i> Selected: <span id="nicheCount">0</span> / 5 (min 1)</p>
       </div>
       <div class="form-group">
         <label class="field-label">Short Description (max 200)</label>
@@ -105,7 +105,7 @@
   const note = document.getElementById('nicheCountNote');
   const search = document.getElementById('msSearch');
   const optionsWrap = document.getElementById('msOptions');
-  const MAX = 5, MIN = 3;
+  const MAX = 5, MIN = 1;
   const allBoxes = Array.from(document.querySelectorAll('input[name="niche"]'));
 
   // open/close
