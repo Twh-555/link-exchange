@@ -290,15 +290,46 @@
 {% block scripts %}
 <script>
   const q=document.getElementById('q'), n=document.getElementById('niche');
+  // no-results state (created once)
+  const grid = document.getElementById('grid');
+  let noResults = document.getElementById('noResultsState');
+  if (!noResults) {
+    noResults = document.createElement('div');
+    noResults.id = 'noResultsState';
+    noResults.style.cssText = 'grid-column:1/-1;text-align:center;padding:48px 24px;display:none';
+    noResults.innerHTML = `
+      <div style="width:72px;height:72px;border-radius:50%;background:#eef4ff;display:flex;align-items:center;justify-content:center;margin:0 auto 16px">
+        <i class="fa-solid fa-magnifying-glass" style="font-size:1.8rem;color:#2f7cf6"></i>
+      </div>
+      <h3 style="margin-bottom:8px;color:var(--dark,#0f1b33)">No matching sites found for "<span id="noResQ"></span>"</h3>
+      <p style="color:var(--muted,#5a6b85);max-width:420px;margin:0 auto 18px;line-height:1.7">
+        This website isn't listed in the directory yet.
+      </p>
+      <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+        <a class="btn btn-primary" href="{{ url_for('submit') }}"><i class="fa-solid fa-plus"></i> It's Your Site? Add It Now — Free</a>
+        <a class="btn btn-primary btn-outline" href="{{ url_for('submit') }}"><i class="fa-solid fa-circle-question"></i> Suggest a Site</a>
+      </div>`;
+    grid.parentNode.appendChild(noResults);
+  }
   function filter(){
     const query=q.value.toLowerCase();
     const niche=n.value;
+    let visible = 0;
     document.querySelectorAll('#grid .site-card').forEach(c=>{
       const okQ=c.dataset.name.includes(query)||!query;
       const niches=(c.dataset.niche||'').toLowerCase().split(', ');
       const okN=niche==='All'||niches.includes(niche.toLowerCase());
-      c.style.display=(okQ&&okN)?'':'none';
+      const show = okQ && okN;
+      c.style.display = show ? '' : 'none';
+      if (show) visible++;
     });
+    // show "add your site" prompt when nothing matches
+    if (visible === 0 && query) {
+      document.getElementById('noResQ').textContent = query;
+      noResults.style.display = 'block';
+    } else {
+      noResults.style.display = 'none';
+    }
   }
   q.addEventListener('input',filter); n.addEventListener('change',filter);
 
