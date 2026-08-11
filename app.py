@@ -69,6 +69,7 @@ CREATE TABLE IF NOT EXISTS sites (
     description TEXT DEFAULT '',
     dr INTEGER DEFAULT 0,
     da INTEGER DEFAULT 0,
+    traffic TEXT DEFAULT '',
     status TEXT DEFAULT 'pending',   -- pending | active | rejected
     created_at TEXT NOT NULL,
     approved_at TEXT
@@ -89,6 +90,10 @@ def get_db():
         g.db = sqlite3.connect(DB_PATH)
         g.db.row_factory = sqlite3.Row
         g.db.executescript(SCHEMA)
+        # migration: ensure traffic column exists (older DBs)
+        cols = [r[1] for r in g.db.execute("PRAGMA table_info(sites)").fetchall()]
+        if "traffic" not in cols:
+            g.db.execute("ALTER TABLE sites ADD COLUMN traffic TEXT DEFAULT ''")
         g.db.commit()
     return g.db
 
@@ -190,11 +195,13 @@ def submit():
                 else:
                     niche_str = ", ".join(niches)
                     db.execute(
-                        "INSERT INTO sites (site_name, site_url, email, niche, description, dr, da, status, created_at)"
-                        " VALUES (?,?,?,?,?,?,?, 'pending', ?)",
+                        "INSERT INTO sites (site_name, site_url, email, niche, description, dr, da, traffic, status, created_at)"
+                        " VALUES (?,?,?,?,?,?,?,?, 'pending', ?)",
                         (f.get("site_name", "").strip()[:60], site_url, email,
                          niche_str, f.get("description", "").strip()[:200],
-                         min(dr, 100), min(da, 100), datetime.utcnow().isoformat()))
+                         min(dr, 100), min(da, 100),
+                         f.get("traffic", "").strip()[:60],
+                         datetime.utcnow().isoformat()))
                     db.commit()
                     msg = "✅ Site submitted! Our team will review it — once approved, your site appears in the directory for link exchanges."
                     ok = True

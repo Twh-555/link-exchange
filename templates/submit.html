@@ -69,6 +69,11 @@
         <label class="field-label">Short Description (max 200)</label>
         <textarea class="form-control" name="description" maxlength="200" rows="3" placeholder="What is your site about?"></textarea>
       </div>
+      <div class="form-group">
+        <label class="field-label">Monthly Traffic <span class="tooltip-icon" data-tooltip="Approximate monthly visitors (e.g. 50K, 100K, 1M)"><i class="fa-solid fa-circle-info"></i></span></label>
+        <input class="form-control" name="traffic" placeholder="e.g. 50,000 visitors/month or 50K">
+        <p class="form-note"><i class="fa-solid fa-chart-line"></i> Tell partners your site's monthly traffic — higher traffic sites get more exchange requests.</p>
+      </div>
       <div class="form-row-2">
         <div class="form-group">
           <label class="field-label">Domain Rating (DR) <span class="req-star">*</span></label>
@@ -154,5 +159,10 @@
   }
   allBoxes.forEach(b => b.addEventListener('change', refresh));
   refresh();
+
+  // ===== Unlock directory after successful submission =====
+  {% if ok %}
+  try { localStorage.setItem('lex_unlocked', '1'); } catch(e) {}
+  {% endif %}
 </script>
 {% endblock %}
