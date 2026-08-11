@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: link-exchange
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app --bind 0.0.0.0:$PORT
+    envVars:
+      - key: PORT
+        value: 5051
+      - key: SECRET_KEY
+        generateValue: true
+      - key: CONTACT_EMAIL
+        value: hello@thewebhospitality.com
+      # - key: AHREFS_API_KEY  # FREE Ahrefs key -> auto DR for new listings
