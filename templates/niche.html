@@ -16,31 +16,33 @@
   </p>
 </section>
 
-<div class="directory-grid">
-  {% for s in sites %}
-  <div class="site-card">
-    <div class="site-card-top">
-      <h3><a href="{{ s.site_url }}" target="_blank" rel="nofollow">{{ s.site_name }}</a></h3>
+<div class="directory-wrap locked" id="directoryWrap">
+  <div class="directory-grid">
+    {% for s in sites %}
+    <div class="site-card">
+      <div class="site-card-top">
+        <h3><a class="site-name-lock" href="{{ s.site_url }}" target="_blank" rel="nofollow">{{ s.site_name }}</a></h3>
+      </div>
+      <p class="desc">{{ s.description[:100] }}</p>
+      <div class="site-meta">
+        <span class="badge-tag tag-dr">DR {{ s.dr }}</span>
+        <span class="badge-tag tag-da">DA {{ s.da }}</span>
+        {% if s.traffic %}<span class="badge-tag tag-traffic"><i class="fa-solid fa-chart-line"></i> {{ s.traffic }}</span>{% endif %}
+        {% for n in (s.niche or '').split(', ') %}
+          {% if n %}<span class="badge-tag tag-niche">{{ n }}</span>{% endif %}
+        {% endfor %}
+      </div>
+      <div class="site-actions">
+        <a class="btn btn-primary btn-sm" href="{{ url_for('exchange', site_id=s.id) }}"><i class="fa-solid fa-arrow-right-arrow-left"></i> Request Exchange</a>
+      </div>
     </div>
-    <p class="desc">{{ s.description[:100] }}</p>
-    <div class="site-meta">
-      <span class="badge-tag tag-dr">DR {{ s.dr }}</span>
-      <span class="badge-tag tag-da">DA {{ s.da }}</span>
-      {% if s.traffic %}<span class="badge-tag tag-traffic"><i class="fa-solid fa-chart-line"></i> {{ s.traffic }}</span>{% endif %}
-      {% for n in (s.niche or '').split(', ') %}
-        {% if n %}<span class="badge-tag tag-niche">{{ n }}</span>{% endif %}
-      {% endfor %}
+    {% else %}
+    <div class="empty-state" style="grid-column:1/-1">
+      <i class="fa-solid fa-inbox"></i>
+      <p>No {{ pretty }} sites yet — <a href="{{ url_for('submit') }}">add yours free</a> and be the first!</p>
     </div>
-    <div class="site-actions">
-      <a class="btn btn-primary btn-sm" href="{{ url_for('exchange', site_id=s.id) }}"><i class="fa-solid fa-arrow-right-arrow-left"></i> Request Exchange</a>
-    </div>
+    {% endfor %}
   </div>
-  {% else %}
-  <div class="empty-state" style="grid-column:1/-1">
-    <i class="fa-solid fa-inbox"></i>
-    <p>No {{ pretty }} sites yet — <a href="{{ url_for('submit') }}">add yours free</a> and be the first!</p>
-  </div>
-  {% endfor %}
 </div>
 
 <div class="hint-box" style="margin-top:24px">
@@ -56,4 +58,18 @@
     <li><a href="{{ site_url }}/link-exchange/free-backlinks-for-{{ niche_name }}/">Free Backlinks for {{ pretty }}</a></li>
   </ul>
 </article>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// ===== Name-blur gate (same as index) =====
+(function(){
+  const wrap = document.getElementById('directoryWrap');
+  if (!wrap) return;
+  const unlocked = localStorage.getItem('lex_unlocked') === '1';
+  if (unlocked) wrap.classList.remove('locked');
+  else wrap.classList.add('locked');
+})();
+</script>
 {% endblock %}
