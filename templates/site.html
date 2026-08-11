@@ -2,6 +2,32 @@
 {% block title %}{{ s.site_name }} – DR {{ s.dr }} | Free Link Exchange Profile | TWH{% endblock %}
 {% block canonical %}{{ site_url }}/link-exchange/site/{{ s.id }}/{% endblock %}
 {% block meta_desc %}{{ s.site_name }} ({{ s.site_url }}) — {{ s.niche }} niche, DR {{ s.dr }}. A free link exchange site on TWH's directory. Request a reciprocal link exchange or view the profile.{% endblock %}
+{% block og_title %}{{ s.site_name }} – DR {{ s.dr }} | Link Exchange Profile{% endblock %}
+{% block og_desc %}{{ s.site_name }} — {{ s.niche }} niche, DR {{ s.dr }}. Request a free reciprocal link exchange.{% endblock %}
+
+{% block extra_head %}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        {"@type": "ListItem", "position": 1, "name": "Home", "item": "https://thewebhospitality.com/"},
+        {"@type": "ListItem", "position": 2, "name": "Link Exchange Directory", "item": "{{ site_url }}/link-exchange/"},
+        {"@type": "ListItem", "position": 3, "name": "{{ s.site_name }}", "item": "{{ site_url }}/link-exchange/site/{{ s.id }}/"}
+      ]
+    },
+    {
+      "@type": "WebSite",
+      "name": "{{ s.site_name }}",
+      "url": "https://{{ s.site_url }}",
+      "description": "{{ s.description[:150] }}"
+    }
+  ]
+}
+</script>
+{% endblock %}
 
 {% block content %}
 <section class="hero-section text-center">
@@ -43,4 +69,26 @@
   sites — <a href="{{ site_url }}/guest-posting-sites-list/">see prices here</a>. One-way link,
   published in 24-48h.
 </div>
+
+<section class="seo-content-section" style="max-width:720px;margin:32px auto 0">
+  <article class="content-article">
+    <h2>Why Exchange Links With {{ s.site_name }}?</h2>
+    <p>
+      {{ s.site_name }} ({{ s.site_url }}) operates in the <b>{{ s.niche }}</b> niche with a
+      Domain Rating of <b>{{ s.dr }}</b>{% if s.da %} and Domain Authority of <b>{{ s.da }}</b>{% endif %}.
+      {% if s.traffic %}The site reports around <b>{{ s.traffic }}</b> in monthly traffic,{% endif %}
+      making it a relevant partner for sites targeting the same audience. A contextual link from
+      {{ s.site_name }} passes topical relevance and can bring qualified referral visitors.
+    </p>
+  </article>
+  <article class="content-article mt-8">
+    <h2>How to Request a Link Exchange</h2>
+    <ol class="styled-list">
+      <li>Click <b>"Request Link Exchange — Free"</b> above.</li>
+      <li>Enter your name, website URL and a short message introducing your site.</li>
+      <li>The owner receives an email notification and replies to you directly.</li>
+      <li>Once both sides place the link, the exchange is live. Keep it niche-relevant!</li>
+    </ol>
+  </article>
+</section>
 {% endblock %}
