@@ -191,12 +191,12 @@ def submit():
                     niche_str = ", ".join(niches)
                     db.execute(
                         "INSERT INTO sites (site_name, site_url, email, niche, description, dr, da, status, created_at)"
-                        " VALUES (?,?,?,?,?,?,?, 'active', ?)",
+                        " VALUES (?,?,?,?,?,?,?, 'pending', ?)",
                         (f.get("site_name", "").strip()[:60], site_url, email,
                          niche_str, f.get("description", "").strip()[:200],
                          min(dr, 100), min(da, 100), datetime.utcnow().isoformat()))
                     db.commit()
-                    msg = "✅ Site added! You're now listed in the directory."
+                    msg = "✅ Site submitted! Our team will review it — once approved, your site appears in the directory for link exchanges."
                     ok = True
     return render_template("submit.html", msg=msg, ok=ok, niches=NICHES,
                            site_url=SITE_URL)
