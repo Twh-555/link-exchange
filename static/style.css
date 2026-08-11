@@ -1928,3 +1928,4 @@ textarea.form-control {
 @media (max-width:640px){
   .footer-container{grid-template-columns:1fr;gap:24px;padding:36px 0 24px}
 }
+.tag-owner{background:#e8f5e9;color:#0a7a3d;border:1px solid #bfe8cd}

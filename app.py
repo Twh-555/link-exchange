@@ -141,6 +141,7 @@ CREATE TABLE IF NOT EXISTS sites (
     verified INTEGER DEFAULT 0,
     verify_token TEXT DEFAULT '',
     verify_expires TEXT DEFAULT '',
+    owner_verified INTEGER DEFAULT 0,
     created_at TEXT NOT NULL,
     approved_at TEXT
 );
@@ -174,6 +175,8 @@ def get_db():
             g.db.execute("ALTER TABLE sites ADD COLUMN verify_expires TEXT DEFAULT ''")
         elif "verify_token" not in cols:
             g.db.execute("ALTER TABLE sites ADD COLUMN verify_token TEXT DEFAULT ''")
+        if "owner_verified" not in cols:
+            g.db.execute("ALTER TABLE sites ADD COLUMN owner_verified INTEGER DEFAULT 0")
         g.db.commit()
     return g.db
 
@@ -236,7 +239,7 @@ def validate_site(site_url: str, email: str) -> tuple[bool, str]:
 def index():
     db = get_db()
     sites = db.execute(
-        "SELECT * FROM sites WHERE status='active' ORDER BY dr DESC").fetchall()
+        "SELECT * FROM sites WHERE status='active' ORDER BY owner_verified DESC, dr DESC").fetchall()
     return render_template("index.html", sites=sites, niches=NICHES,
                            site_url=SITE_URL)
 
@@ -254,125 +257,141 @@ def submit():
         if not valid:
             msg = f"❌ {err}"
         else:
-            # ---- duplicate detection: same site already submitted? ----
-            dup = db.execute(
-                "SELECT * FROM sites WHERE site_url=? ORDER BY id DESC LIMIT 1",
+            # ---- ownership check: email domain == site domain? ----
+            site_domain = site_url.split("/")[0].lower()
+            email_domain = email.split("@")[-1].lower() if "@" in email else ""
+            owner_verified = 1 if email_domain == site_domain else 0
+
+            # ---- same site: prefer verified owner, others can still apply ----
+            existing_active = db.execute(
+                "SELECT * FROM sites WHERE site_url=? AND status='active' ORDER BY id DESC LIMIT 1",
                 (site_url,)).fetchone()
-            if dup:
-                if dup["status"] == "active":
-                    msg = (f"❌ {dup['site_name']} is already listed in the directory "
-                           f"(DR {dup['dr']}). Only one listing per website is allowed — "
-                           "no need to submit again.")
-                elif dup["status"] == "pending":
-                    msg = (f"❌ This website is already submitted and pending review "
-                           f"(submitted {dup['created_at'][:10]}). We'll notify the owner once it's approved.")
+            if existing_active:
+                if owner_verified:
+                    # owner claims their site -> demote unverified listing, go live
+                    db.execute(
+                        "UPDATE sites SET status='rejected' WHERE site_url=? AND status='active' AND owner_verified=0",
+                        (site_url,))
+                    new_status = "active"
                 else:
-                    msg = (f"❌ This website was already submitted and is not eligible for "
-                           "a new listing. Contact us if you believe this is a mistake.")
+                    new_status = "pending"
+            else:
+                new_status = "pending"
+
+            # multi-niche: select 3-5 niches (getlist returns list)
+            niches = [n for n in f.getlist("niche") if n and n != "All"]
+            niches = list(dict.fromkeys(niches))  # dedupe preserve order
+            if len(niches) < 1:
+                msg = "❌ Please select at least 1 niche."
+                ok = False
+            elif len(niches) > 5:
+                msg = "❌ Please select at most 5 niches."
                 ok = False
             else:
-                # multi-niche: select 3-5 niches (getlist returns list)
-                niches = [n for n in f.getlist("niche") if n and n != "All"]
-                niches = list(dict.fromkeys(niches))  # dedupe preserve order
-                if len(niches) < 1:
-                    msg = "❌ Please select at least 1 niche."
+                # DR + DA mandatory
+                try:
+                    dr = int(f.get("dr", "").strip())
+                    da = int(f.get("da", "").strip())
+                except ValueError:
+                    dr = da = None
+                if dr is None or da is None:
+                    msg = "❌ DR and DA are mandatory. Please enter both values (0-100)."
                     ok = False
-                elif len(niches) > 5:
-                    msg = "❌ Please select at most 5 niches."
+                elif not (0 <= dr <= 100 and 0 <= da <= 100):
+                    msg = "❌ DR and DA must be between 0 and 100."
                     ok = False
                 else:
-                    # DR + DA mandatory
-                    try:
-                        dr = int(f.get("dr", "").strip())
-                        da = int(f.get("da", "").strip())
-                    except ValueError:
-                        dr = da = None
-                    if dr is None or da is None:
-                        msg = "❌ DR and DA are mandatory. Please enter both values (0-100)."
-                        ok = False
-                    elif not (0 <= dr <= 100 and 0 <= da <= 100):
-                        msg = "❌ DR and DA must be between 0 and 100."
-                        ok = False
-                    else:
-                        niche_str = ", ".join(niches)
-                        token = secrets.token_urlsafe(16)
-                        password = secrets.token_urlsafe(6)  # e.g. "xY3kPq_RsT"
-                        verify_token = secrets.token_urlsafe(24)
-                        verify_expires = (datetime.utcnow() +
-                                          timedelta(hours=24)).isoformat()
-                        db.execute(
-                            "INSERT INTO sites (site_name, site_url, email, niche, description, dr, da, traffic, status, token, password, verified, verify_token, verify_expires, created_at)"
-                            " VALUES (?,?,?,?,?,?,?,?, 'pending', ?, ?, 0, ?, ?, ?)",
-                            (f.get("site_name", "").strip()[:60], site_url, email,
-                             niche_str, f.get("description", "").strip()[:200],
-                             min(dr, 100), min(da, 100),
-                             f.get("traffic", "").strip()[:60],
-                             token, password, verify_token, verify_expires,
-                             datetime.utcnow().isoformat()))
+                    niche_str = ", ".join(niches)
+                    token = secrets.token_urlsafe(16)
+                    password = secrets.token_urlsafe(6)  # e.g. "xY3kPq_RsT"
+                    verify_token = secrets.token_urlsafe(24)
+                    verify_expires = (datetime.utcnow() +
+                                      timedelta(hours=24)).isoformat()
+                    db.execute(
+                        "INSERT INTO sites (site_name, site_url, email, niche, description, dr, da, traffic, status, token, password, verified, verify_token, verify_expires, owner_verified, created_at)"
+                        " VALUES (?,?,?,?,?,?,?,?, ?, ?, ?, 0, ?, ?, ?, ?)",
+                        (f.get("site_name", "").strip()[:60], site_url, email,
+                         niche_str, f.get("description", "").strip()[:200],
+                         min(dr, 100), min(da, 100),
+                         f.get("traffic", "").strip()[:60],
+                         new_status, token, password, verify_token, verify_expires,
+                         owner_verified, datetime.utcnow().isoformat()))
                     db.commit()
-                    msg = "✅ Site submitted! Please verify your email — check your inbox for the verification link. Once verified, our team reviews your listing."
+                    if new_status == "active":
+                        msg = ("✅ Site submitted & LIVE! Your email matches the site domain — "
+                               "you're verified as the owner. Check your inbox for the verification link.")
+                    elif owner_verified:
+                        msg = ("✅ Site submitted! You're verified as the owner (email domain matches). "
+                               "Our team will approve your listing shortly. Check your inbox for the verification link.")
+                    elif existing_active:
+                        msg = ("✅ Site submitted for review! Note: this site already has a verified owner — "
+                               "your listing will be reviewed before going live. Check your inbox for the verification link.")
+                    else:
+                        msg = ("✅ Site submitted! Your email domain doesn't match the website domain, so "
+                               "our team will verify ownership manually. Check your inbox for the verification link.")
                     ok = True
                     # verification email: login + verify link only (no site details)
-                    verify_link = f"{SITE_URL}/link-exchange/verify/{verify_token}"
-                    if email:
-                        send_mail(
-                            email,
-                            "✅ Verify your email – TWH Link Exchange",
-                            f"""<!DOCTYPE html>
-<html><body style="margin:0;padding:0;background:#f4f6fb;font-family:Arial,sans-serif">
-<center style="width:100%">
-<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#f4f6fb;padding:24px 0">
-<tr><td align="center">
-<table role="presentation" width="600" cellspacing="0" cellpadding="0" border="0" style="max-width:600px;width:100%">
-  <tr>
-    <td align="center" style="background:linear-gradient(135deg,#1a3a8f 0%,#2f7cf6 55%,#6c5ce7 100%);border-radius:16px 16px 0 0;padding:32px 24px">
-      <div style="font-size:40px;line-height:1">📧</div>
-      <h1 style="color:#ffffff;margin:12px 0 6px;font-size:22px;font-weight:800;font-family:Arial,sans-serif">Verify Your Email</h1>
-      <p style="color:rgba(255,255,255,.9);margin:0;font-size:14px;font-family:Arial,sans-serif">TWH Link Exchange</p>
-    </td>
-  </tr>
-  <tr>
-    <td style="background:#ffffff;border-radius:0 0 16px 16px;padding:28px 24px">
-      <p style="font-size:15px;color:#0f1b33;line-height:1.6;margin:0 0 16px;font-family:Arial,sans-serif">Hi there,</p>
-      <p style="font-size:14px;color:#3a4a63;line-height:1.7;margin:0 0 20px;font-family:Arial,sans-serif">
-        Click the link below to verify your email and start adding your websites to the exchange.
-        The link is valid for <b>24 hours</b>.
-      </p>
-      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin-bottom:20px">
-        <tr><td align="center">
-          <a href="{verify_link}" style="display:inline-block;background:linear-gradient(135deg,#2f7cf6,#6c5ce7);color:#ffffff;text-decoration:none;padding:14px 36px;border-radius:50px;font-size:15px;font-weight:700;font-family:Arial,sans-serif">Verify my email</a>
-        </td></tr>
-      </table>
-      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#f5f8ff;border:1px solid #e3ebff;border-radius:12px;margin-bottom:20px">
-        <tr><td style="padding:16px 20px">
-          <div style="font-size:13px;color:#5a6b85;line-height:1.7;margin-bottom:8px;font-family:Arial,sans-serif">If the button doesn't work, copy this link:</div>
-          <div style="font-size:12px;color:#2f7cf6;word-break:break-all;font-family:monospace;line-height:1.6">{verify_link}</div>
-        </td></tr>
-      </table>
-      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="border:1px solid #e3e8f2;border-radius:12px;margin-bottom:20px">
-        <tr><td style="background:#f0f7ff;padding:12px 20px;font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:#1a3a8f;border-bottom:1px solid #e3e8f2;border-radius:12px 12px 0 0;font-family:Arial,sans-serif">🔑 Your Login Details</td></tr>
-        <tr><td style="padding:12px 20px 2px;color:#5a6b85;font-weight:600;font-size:13px;font-family:Arial,sans-serif">Username (email)</td></tr>
-        <tr><td style="padding:2px 20px 12px;color:#0f1b33;font-weight:700;font-size:14px;font-family:Arial,sans-serif">{email}</td></tr>
-        <tr style="background:#fafbfe"><td style="padding:12px 20px 2px;color:#5a6b85;font-weight:600;font-size:13px;font-family:Arial,sans-serif">Password</td></tr>
-        <tr style="background:#fafbfe"><td style="padding:2px 20px 14px;color:#0f1b33;font-weight:700;font-size:14px;font-family:Arial,sans-serif">{password}</td></tr>
-      </table>
-      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin-bottom:12px">
-        <tr><td align="center">
-          <a href="{SITE_URL}/link-exchange/login" style="display:inline-block;background:#0f1b33;color:#ffffff;text-decoration:none;padding:14px 32px;border-radius:50px;font-size:15px;font-weight:700;font-family:Arial,sans-serif">Login to Your Account →</a>
-        </td></tr>
-      </table>
-      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="border-top:1px solid #eef1f7">
-        <tr><td align="center" style="padding-top:16px">
-          <p style="font-size:12px;color:#8a97ad;margin:0;font-family:Arial,sans-serif">Sent via <b style="color:#2f7cf6">TWH Link Exchange Directory</b></p>
-        </td></tr>
-      </table>
-    </td>
-  </tr>
-</table>
-</td></tr>
-</table>
-</center>
-</body></html>""")
+                    if ok:
+                        verify_link = f"{SITE_URL}/link-exchange/verify/{verify_token}"
+                        if email:
+                            send_mail(
+                                email,
+                                "✅ Verify your email – TWH Link Exchange",
+                                f"""<!DOCTYPE html>
+    <html><body style="margin:0;padding:0;background:#f4f6fb;font-family:Arial,sans-serif">
+    <center style="width:100%">
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#f4f6fb;padding:24px 0">
+    <tr><td align="center">
+    <table role="presentation" width="600" cellspacing="0" cellpadding="0" border="0" style="max-width:600px;width:100%">
+      <tr>
+        <td align="center" style="background:linear-gradient(135deg,#1a3a8f 0%,#2f7cf6 55%,#6c5ce7 100%);border-radius:16px 16px 0 0;padding:32px 24px">
+          <div style="font-size:40px;line-height:1">📧</div>
+          <h1 style="color:#ffffff;margin:12px 0 6px;font-size:22px;font-weight:800;font-family:Arial,sans-serif">Verify Your Email</h1>
+          <p style="color:rgba(255,255,255,.9);margin:0;font-size:14px;font-family:Arial,sans-serif">TWH Link Exchange</p>
+        </td>
+      </tr>
+      <tr>
+        <td style="background:#ffffff;border-radius:0 0 16px 16px;padding:28px 24px">
+          <p style="font-size:15px;color:#0f1b33;line-height:1.6;margin:0 0 16px;font-family:Arial,sans-serif">Hi there,</p>
+          <p style="font-size:14px;color:#3a4a63;line-height:1.7;margin:0 0 20px;font-family:Arial,sans-serif">
+            Click the link below to verify your email and start adding your websites to the exchange.
+            The link is valid for <b>24 hours</b>.
+          </p>
+          <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin-bottom:20px">
+            <tr><td align="center">
+              <a href="{verify_link}" style="display:inline-block;background:linear-gradient(135deg,#2f7cf6,#6c5ce7);color:#ffffff;text-decoration:none;padding:14px 36px;border-radius:50px;font-size:15px;font-weight:700;font-family:Arial,sans-serif">Verify my email</a>
+            </td></tr>
+          </table>
+          <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#f5f8ff;border:1px solid #e3ebff;border-radius:12px;margin-bottom:20px">
+            <tr><td style="padding:16px 20px">
+              <div style="font-size:13px;color:#5a6b85;line-height:1.7;margin-bottom:8px;font-family:Arial,sans-serif">If the button doesn't work, copy this link:</div>
+              <div style="font-size:12px;color:#2f7cf6;word-break:break-all;font-family:monospace;line-height:1.6">{verify_link}</div>
+            </td></tr>
+          </table>
+          <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="border:1px solid #e3e8f2;border-radius:12px;margin-bottom:20px">
+            <tr><td style="background:#f0f7ff;padding:12px 20px;font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:#1a3a8f;border-bottom:1px solid #e3e8f2;border-radius:12px 12px 0 0;font-family:Arial,sans-serif">🔑 Your Login Details</td></tr>
+            <tr><td style="padding:12px 20px 2px;color:#5a6b85;font-weight:600;font-size:13px;font-family:Arial,sans-serif">Username (email)</td></tr>
+            <tr><td style="padding:2px 20px 12px;color:#0f1b33;font-weight:700;font-size:14px;font-family:Arial,sans-serif">{email}</td></tr>
+            <tr style="background:#fafbfe"><td style="padding:12px 20px 2px;color:#5a6b85;font-weight:600;font-size:13px;font-family:Arial,sans-serif">Password</td></tr>
+            <tr style="background:#fafbfe"><td style="padding:2px 20px 14px;color:#0f1b33;font-weight:700;font-size:14px;font-family:Arial,sans-serif">{password}</td></tr>
+          </table>
+          <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin-bottom:12px">
+            <tr><td align="center">
+              <a href="{SITE_URL}/link-exchange/login" style="display:inline-block;background:#0f1b33;color:#ffffff;text-decoration:none;padding:14px 32px;border-radius:50px;font-size:15px;font-weight:700;font-family:Arial,sans-serif">Login to Your Account →</a>
+            </td></tr>
+          </table>
+          <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="border-top:1px solid #eef1f7">
+            <tr><td align="center" style="padding-top:16px">
+              <p style="font-size:12px;color:#8a97ad;margin:0;font-family:Arial,sans-serif">Sent via <b style="color:#2f7cf6">TWH Link Exchange Directory</b></p>
+            </td></tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+    </td></tr>
+    </table>
+    </center>
+    </body></html>""")
     return render_template("submit.html", msg=msg, ok=ok, niches=NICHES,
                             site_url=SITE_URL,
                             site_email_hint=email if email else "")

@@ -21,13 +21,15 @@
   <h2>Pending Approvals</h2>
   <div class="admin-table-wrap">
     <table>
-      <thead><tr><th>Site</th><th>Niche</th><th>DR</th><th>DA</th><th>Traffic</th><th>Email</th><th>Date</th><th>Actions</th></tr></thead>
+      <thead><tr><th>Site</th><th>Niche</th><th>DR</th><th>DA</th><th>Traffic</th><th>Owner</th><th>Email</th><th>Date</th><th>Actions</th></tr></thead>
       <tbody>
       {% for s in pending_sites %}
       <tr>
         <td><a href="{{ s.site_url }}" target="_blank">{{ s.site_name }}</a></td>
         <td>{{ s.niche }}</td><td>{{ s.dr }}</td><td>{{ s.da }}</td>
-        <td>{{ s.traffic or '-' }}</td><td>{{ s.email }}</td>
+        <td>{{ s.traffic or '-' }}</td>
+        <td>{% if s.owner_verified %}<span class="tag-owner" style="padding:2px 10px;border-radius:12px;font-size:.75rem;font-weight:700"><i class="fa-solid fa-circle-check"></i> Verified</span>{% else %}<span style="color:#8a97ad;font-size:.8rem">Unverified</span>{% endif %}</td>
+        <td>{{ s.email }}</td>
         <td>{{ s.created_at[:10] }}</td>
         <td>
           <a class="btn btn-primary btn-sm btn-green" href="{{ url_for('admin_approve', site_id=s.id) }}">Approve</a>
@@ -35,7 +37,7 @@
         </td>
       </tr>
       {% else %}
-      <tr><td colspan="9" style="text-align:center;color:#8a97ad;padding:20px">Nothing pending 🎉</td></tr>
+      <tr><td colspan="10" style="text-align:center;color:#8a97ad;padding:20px">Nothing pending 🎉</td></tr>
       {% endfor %}
       </tbody>
     </table>

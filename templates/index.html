@@ -126,6 +126,7 @@
       <div class="site-meta">
         <span class="badge-tag tag-dr">DR {{ s.dr }}</span>
         <span class="badge-tag tag-da">DA {{ s.da }}</span>
+        {% if s.owner_verified %}<span class="badge-tag tag-owner"><i class="fa-solid fa-circle-check"></i> Verified Owner</span>{% endif %}
         {% if s.traffic %}<span class="badge-tag tag-traffic"><i class="fa-solid fa-chart-line"></i> {{ s.traffic }}</span>{% endif %}
         {% for n in (s.niche or '').split(', ') %}
           {% if n %}<span class="badge-tag tag-niche">{{ n }}</span>{% endif %}
