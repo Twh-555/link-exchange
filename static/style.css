@@ -1943,3 +1943,18 @@ textarea.form-control {
   .footer-bottom { padding: 14px 4px; font-size: 12px; }
   .footer-bottom-flex { flex-direction: column; align-items: flex-start; gap: 4px; }
 }
+
+/* ============ Mobile First-View Improvements ============ */
+@media (max-width: 640px) {
+  .hero-section { padding-top: 8px; }
+  .hero-section .hero-badge { font-size: .7rem; padding: 5px 12px; }
+  .hero-section .page-title { font-size: 1.35rem !important; line-height: 1.25; margin-bottom: 8px; }
+  .hero-section .page-subtitle { font-size: .88rem; line-height: 1.6; max-width: 100%; }
+  .hero-section .hero-actions { margin-top: 12px; gap: 8px; }
+  .hero-section .hero-actions .btn { font-size: .85rem; padding: 10px 16px; }
+  .hero-section + .content-article { margin-top: 18px !important; }
+  .hint-box { font-size: .82rem; padding: 10px 12px; line-height: 1.6; margin: 14px 0; }
+  .filter-bar { flex-wrap: wrap; gap: 8px; margin: 14px 0; }
+  .filter-bar .form-control { min-width: 0; flex: 1 1 100%; }
+  .filter-bar select { max-width: 100% !important; }
+}
