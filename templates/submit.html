@@ -43,12 +43,17 @@
         <div style="font-size:.82rem;color:#5a6b85;background:#fffbe9;border:1px solid #ffe4a1;border-radius:8px;padding:10px 14px">
           📬 <b>Didn't receive the email?</b> Check your spam folder or verify the email address you entered. The status link was sent to <b>{{ site_email_hint }}</b>
         </div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:18px">
+          <a class="btn btn-primary" href="{{ url_for('submit') }}"><i class="fa-solid fa-plus"></i> Add Another Site</a>
+          <a class="btn btn-primary btn-outline" href="{{ url_for('index') }}"><i class="fa-solid fa-layer-group"></i> Check All Sites</a>
+        </div>
       </div>
       {% else %}
       <div class="msg-err" style="margin-bottom:16px">{{ msg }}</div>
       {% endif %}
     {% endif %}
 
+    {% if not ok %}
     <form method="post" style="display:flex;flex-direction:column;gap:4px">
       <div class="form-group">
         <label class="field-label">Site Name</label>
@@ -110,6 +115,7 @@
       </div>
       <button class="btn btn-primary btn-block btn-lg" type="submit"><i class="fa-solid fa-paper-plane"></i> Submit Listing — Free</button>
     </form>
+    {% endif %}
   </div>
 </div>
 
