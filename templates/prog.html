@@ -1,0 +1,113 @@
+{% extends 'base.html' %}
+{% block title %}{{ title }}{% endblock %}
+{% block canonical %}{{ site_url }}/link-exchange/{{ prog_type }}-{{ niche_slug }}/{% endblock %}
+{% block meta_desc %}{{ desc }}{% endblock %}
+{% block og_title %}{{ title }}{% endblock %}
+{% block og_desc %}{{ desc }}{% endblock %}
+{% block tw_title %}{{ title }}{% endblock %}
+{% block tw_desc %}{{ desc }}{% endblock %}
+
+{% block extra_head %}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        {"@type": "ListItem", "position": 1, "name": "Home", "item": "https://thewebhospitality.com/"},
+        {"@type": "ListItem", "position": 2, "name": "Link Exchange Directory", "item": "{{ site_url }}/link-exchange/"},
+        {"@type": "ListItem", "position": 3, "name": "{{ title }}", "item": "{{ site_url }}/link-exchange/{{ prog_type }}-{{ niche_slug }}/"}
+      ]
+    },
+    {
+      "@type": "FAQPage",
+      "mainEntity": [
+        {% for q, a in data.faqs %}
+        {"@type": "Question", "name": "{{ q }}", "acceptedAnswer": {"@type": "Answer", "text": "{{ a }}"}}{% if not loop.last %},{% endif %}
+        {% endfor %}
+      ]
+    }
+  ]
+}
+</script>
+{% endblock %}
+
+{% block content %}
+<section class="hero-section text-center">
+  <div class="hero-badge"><i class="fa-solid fa-link"></i> {{ pretty }} Niche</div>
+  <h1 class="page-title"><span class="gradient-text">{{ title.split(' – ')[0] }}</span></h1>
+  <p class="page-subtitle">{{ desc }}</p>
+  <div class="hero-actions" style="margin-top:18px;display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
+    <a class="btn btn-primary" href="{{ url_for('submit') }}"><i class="fa-solid fa-plus"></i> Add Your Site (Free)</a>
+    <a class="btn btn-primary btn-outline" href="{{ url_for('index') }}"><i class="fa-solid fa-layer-group"></i> All Niches</a>
+  </div>
+</section>
+
+<!-- Programmatic content (unique per niche) -->
+<section class="seo-content-section mt-12">
+  <article class="content-article">
+    <h2>{{ t.h2_1.replace('{name}', pretty) }}</h2>
+    <p>{{ t.para_1.replace('{name}', pretty) }}</p>
+  </article>
+
+  <article class="content-article mt-8">
+    <h2>{{ t.h2_2.replace('{name}', pretty) }}</h2>
+    <ul class="styled-list">
+      {% for b in t.bullets %}
+      <li>{{ b.replace('{name}', pretty) }}</li>
+      {% endfor %}
+    </ul>
+  </article>
+
+  <!-- Niche sites from directory -->
+  <article class="content-article mt-8">
+    <h2>{{ t.h2_3.replace('{name}', pretty) }}</h2>
+    <p>{{ t.para_3.replace('{name}', pretty) }}</p>
+    {% if sites %}
+    <div class="directory-grid" style="margin-top:16px">
+      {% for s in sites %}
+      <div class="site-card">
+        <div class="site-card-top">
+          <h3><a href="{{ s.site_url }}" target="_blank" rel="nofollow">{{ s.site_name }}</a></h3>
+        </div>
+        <div class="site-meta">
+          <span class="badge-tag tag-dr">DR {{ s.dr }}</span>
+          <span class="badge-tag tag-da">DA {{ s.da }}</span>
+        </div>
+        <div class="site-actions">
+          <a class="btn btn-primary btn-sm" href="{{ url_for('exchange', site_id=s.id) }}"><i class="fa-solid fa-arrow-right-arrow-left"></i> Request Exchange</a>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <p style="color:var(--muted,#5a6b85)">No {{ pretty }} sites listed yet — <a href="{{ url_for('submit') }}">add yours free</a>.</p>
+    {% endif %}
+  </article>
+
+  <!-- Unique FAQs -->
+  <article class="content-article mt-8">
+    <h2>{{ pretty }} Link Exchange FAQ</h2>
+    <div class="faq-accordion">
+      {% for q, a in data.faqs %}
+      <div class="faq-item">
+        <h3 class="faq-question">{{ q }}</h3>
+        <div class="faq-answer"><p>{{ a }}</p></div>
+      </div>
+      {% endfor %}
+    </div>
+  </article>
+
+  <!-- Related programmatic pages (internal linking for programmatic SEO) -->
+  <article class="content-article mt-8">
+    <h2>More {{ pretty }} Resources</h2>
+    <ul class="styled-list">
+      <li><a href="{{ site_url }}/link-exchange/link-exchange-in-{{ niche_slug }}/">Link Exchange in {{ pretty }}</a></li>
+      <li><a href="{{ site_url }}/link-exchange/guest-post-sites-in-{{ niche_slug }}/">Guest Post Sites in {{ pretty }}</a></li>
+      <li><a href="{{ site_url }}/link-exchange/free-backlinks-for-{{ niche_slug }}/">Free Backlinks for {{ pretty }}</a></li>
+      <li><a href="{{ site_url }}/link-exchange/niche/{{ niche_slug }}/">{{ pretty }} Niche Directory</a></li>
+    </ul>
+  </article>
+</section>
+{% endblock %}

@@ -19,6 +19,22 @@ from pathlib import Path
 import requests
 from flask import Flask, g, jsonify, redirect, render_template, request, url_for
 
+try:
+    from niche_data import get_niche_data
+except ImportError:
+    def get_niche_data(slug):
+        pretty = slug.replace("-", " ").title()
+        return {
+            "name": pretty,
+            "kw": f"link exchange in {pretty.lower()}",
+            "intro": f"A link exchange in {pretty} connects site owners who share audiences, helping both sides earn relevant authority links.",
+            "faqs": [
+                (f"Do {pretty} link exchanges work?", f"Yes — a link exchange in {pretty} sends targeted referral traffic and topical authority."),
+                (f"Who should {pretty} sites exchange with?", "Sites in the same niche with similar Domain Rating."),
+                (f"How many {pretty} exchanges is safe?", "Keep reciprocal links under 10% of your profile."),
+            ],
+        }
+
 BASE_DIR = Path(__file__).resolve().parent
 DB_PATH = BASE_DIR / "linkexchange.db"
 SITE_URL = "https://www.thewebhospitality.com"
@@ -253,9 +269,15 @@ def sitemap():
         "SELECT id, site_name, site_url, dr FROM sites WHERE status='active' ORDER BY dr DESC").fetchall()
     urls = [f"<url><loc>{SITE_URL}/link-exchange/</loc><changefreq>daily</changefreq><priority>0.9</priority></url>"]
     for n in NICHES[1:]:
+        slug = n.lower().replace(" / ", "-").replace(" ", "-")
         urls.append(
-            f"<url><loc>{SITE_URL}/link-exchange/{n.lower().replace(' / ', '-').replace(' ', '-')}/</loc>"
+            f"<url><loc>{SITE_URL}/link-exchange/niche/{slug}/</loc>"
             f"<changefreq>weekly</changefreq><priority>0.7</priority></url>")
+        # programmatic SEO pages (3 per niche)
+        for pt in ("link-exchange-in", "guest-post-sites-in", "free-backlinks-for"):
+            urls.append(
+                f"<url><loc>{SITE_URL}/link-exchange/{pt}-{slug}/</loc>"
+                f"<changefreq>weekly</changefreq><priority>0.6</priority></url>")
     for s in sites:
         urls.append(
             f"<url><loc>{SITE_URL}/link-exchange/site/{s['id']}/</loc><changefreq>monthly</changefreq><priority>0.5</priority></url>")
@@ -286,6 +308,91 @@ def niche_page(niche_name):
         (f"%{pretty}%",)).fetchall()
     return render_template("niche.html", sites=sites, pretty=pretty,
                            niche_name=niche_name, site_url=SITE_URL)
+
+
+# ============ PROGRAMMATIC SEO PAGES ============
+# Pattern: /link-exchange-in-<niche>/ , /guest-post-sites-in-<niche>/ , /free-backlinks-for-<niche>/
+# 44 niches x 3 = 132 unique SEO pages with unique content per niche.
+
+PROG_TYPES = {
+    "link-exchange-in": {
+        "h2_1": "Why {name} Sites Need Link Exchange Partners",
+        "para_1": "{intro}",
+        "h2_2": "Best {name} Link Exchange Practices",
+        "bullets": [
+            "Match authority — exchange with {name} sites at or slightly above your DR.",
+            "Keep it contextual — place partner links inside relevant content, not footers.",
+            "Stay under 10% — keep reciprocal links a small part of your overall profile.",
+            "Check activity — prefer {name} sites that publish regularly and get real traffic.",
+        ],
+        "h2_3": "Find {name} Link Exchange Partners Here",
+        "para_3": "Browse the directory below, filter by niche and Domain Rating, and send a free exchange request to sites that match your audience. New partners are added every week.",
+    },
+    "guest-post-sites-in": {
+        "h2_1": "Guest Post Sites in {name} for Backlinks",
+        "para_1": "Guest posting in {name} is one of the fastest ways to earn editorial backlinks. {intro} These sites accept contributor content — pitch them with a strong topic and earn a contextual link.",
+        "h2_2": "How to Get Guest Posts Accepted in {name}",
+        "bullets": [
+            "Study the site — read 3-5 recent {name} posts to match tone and format.",
+            "Pitch data-driven topics — stats, case studies, and original research get accepted fastest.",
+            "Write for humans first — SEO-friendly but genuinely useful {name} content.",
+            "Follow guidelines — most {name} sites publish clear contributor rules.",
+        ],
+        "h2_3": "Guest Post Sites in {name} Accepting Contributors",
+        "para_3": "Want a guaranteed {name} guest post without the pitching? Check our guest post service for published links on high-DR {name} sites.",
+    },
+    "free-backlinks-for": {
+        "h2_1": "Free Backlinks for {name} Sites",
+        "para_1": "Every {name} site needs backlinks, and not all of them cost money. {intro} Use these free methods to build authority without spending a rupee.",
+        "h2_2": "Free Backlink Strategies for {name}",
+        "bullets": [
+            "Link exchanges — swap relevant links with other {name} sites (our directory makes this free).",
+            "Free directories — list your {name} site in niche directories and business listings.",
+            "Content promotion — share {name} guides on forums, communities, and social platforms.",
+            "Broken link building — find broken links on {name} blogs and offer your content as a replacement.",
+        ],
+        "h2_3": "Get Free {name} Backlinks Today",
+        "para_3": "Start with a free listing in our link exchange directory — it costs nothing, takes 2 minutes, and puts your {name} site in front of potential partners.",
+    },
+}
+
+
+@app.route("/link-exchange-in-<niche_slug>/")
+def prog_page_linkexchange(niche_slug):
+    return _prog_page("link-exchange-in", niche_slug)
+
+
+@app.route("/guest-post-sites-in-<niche_slug>/")
+def prog_page_guestpost(niche_slug):
+    return _prog_page("guest-post-sites-in", niche_slug)
+
+
+@app.route("/free-backlinks-for-<niche_slug>/")
+def prog_page_backlinks(niche_slug):
+    return _prog_page("free-backlinks-for", niche_slug)
+
+
+def _prog_page(prog_type, niche_slug):
+    data = get_niche_data(niche_slug)
+    db = get_db()
+    pretty = data["name"]
+    sites = db.execute(
+        "SELECT * FROM sites WHERE status='active' AND niche LIKE ? ORDER BY dr DESC",
+        (f"%{pretty}%",)).fetchall()
+    t = PROG_TYPES[prog_type]
+    # title pattern per type
+    if prog_type == "link-exchange-in":
+        title = f"Link Exchange in {pretty} – Find {pretty} Link Exchange Sites | TWH"
+        desc = f"Find link exchange in {pretty}. Browse {pretty} link exchange sites, list your website free, and build reciprocal backlinks with relevant {pretty} site owners."
+    elif prog_type == "guest-post-sites-in":
+        title = f"Guest Post Sites in {pretty} – Accepting Guest Posts 2026 | TWH"
+        desc = f"Best guest post sites in {pretty} accepting contributors in 2026. Pitch these {pretty} blogs, earn editorial backlinks, and grow your authority."
+    else:
+        title = f"Free Backlinks for {pretty} Sites – 2026 Guide | TWH"
+        desc = f"Get free backlinks for {pretty} sites in 2026. Link exchanges, free directories, and content strategies to build {pretty} authority at zero cost."
+    return render_template("prog.html", data=data, t=t, sites=sites,
+                           pretty=pretty, prog_type=prog_type, niche_slug=niche_slug,
+                           title=title, desc=desc, site_url=SITE_URL)
 
 
 @app.route("/site/<int:site_id>/")
