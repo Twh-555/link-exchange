@@ -1958,3 +1958,13 @@ textarea.form-control {
   .filter-bar .form-control { min-width: 0; flex: 1 1 100%; }
   .filter-bar select { max-width: 100% !important; }
 }
+
+/* ============ Header Login Button ============ */
+.nav-login-btn { white-space: nowrap; margin-right: 2px; }
+.nav-login-mobile { display: none; }
+@media (max-width: 992px) {
+  .nav-login-mobile { display: flex; }
+}
+@media (min-width: 993px) {
+  .nav-login-mobile { display: none !important; }
+}

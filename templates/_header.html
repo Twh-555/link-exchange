@@ -75,9 +75,13 @@
           <a href="https://www.thewebhospitality.com/blog/" class="nav-link"><i class="fa-solid fa-blog"></i> Blog</a>
           <a href="https://www.thewebhospitality.com/contact-us/" class="nav-link"><i class="fa-solid fa-envelope"></i>
             Contact</a>
+          <a href="{{ url_for('login') }}" class="nav-link nav-login-mobile"><i class="fa-solid fa-right-to-bracket"></i> Login / My Account</a>
         </div>
 
         <div class="nav-actions">
+          <a href="{{ url_for('login') }}" class="btn btn-primary btn-sm nav-login-btn" style="font-size:.8rem;padding:7px 14px">
+            <i class="fa-solid fa-right-to-bracket"></i> Login
+          </a>
           <button id="themeToggleBtn" class="theme-toggle-btn" title="Toggle Light/Dark mode" aria-label="Toggle Theme">
             <i class="fa-solid fa-moon"></i>
           </button>
