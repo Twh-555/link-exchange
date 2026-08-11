@@ -1,0 +1,63 @@
+{% extends 'base.html' %}
+{% block title %}Link Exchange Admin Panel | TWH{% endblock %}
+{% block canonical %}{{ site_url }}/link-exchange/admin{% endblock %}
+{% block meta_desc %}Admin panel for The Web Hospitality link exchange directory — approve listings and review exchange requests.{% endblock %}
+
+{% block content %}
+<section class="hero-section text-center">
+  <div class="hero-badge"><i class="fa-solid fa-shield-halved"></i> Admin Only</div>
+  <h1 class="page-title"><span class="gradient-text">Link Exchange Admin</span></h1>
+  <p class="page-subtitle">Approve new listings & review exchange requests. New members = new reciprocal backlinks.</p>
+</section>
+
+<div class="stat-row">
+  <div class="stat-chip"><b>{{ active }}</b><span>Active Sites</span></div>
+  <div class="stat-chip"><b>{{ pending }}</b><span>Pending Approval</span></div>
+  <div class="stat-chip"><b>{{ exchanges }}</b><span>Exchange Requests</span></div>
+</div>
+
+<article class="content-article">
+  <h2>Pending Approvals</h2>
+  <div class="admin-table-wrap">
+    <table>
+      <thead><tr><th>Site</th><th>Niche</th><th>DR</th><th>Email</th><th>Date</th><th>Actions</th></tr></thead>
+      <tbody>
+      {% for s in pending_sites %}
+      <tr>
+        <td><a href="{{ s.site_url }}" target="_blank">{{ s.site_name }}</a></td>
+        <td>{{ s.niche }}</td><td>{{ s.dr }}</td><td>{{ s.email }}</td>
+        <td>{{ s.created_at[:10] }}</td>
+        <td>
+          <a class="btn btn-primary btn-sm btn-green" href="{{ url_for('admin_approve', site_id=s.id) }}">Approve</a>
+          <a class="btn btn-primary btn-sm btn-red" href="{{ url_for('admin_reject', site_id=s.id) }}">Reject</a>
+        </td>
+      </tr>
+      {% else %}
+      <tr><td colspan="6" style="text-align:center;color:#8a97ad;padding:20px">Nothing pending 🎉</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</article>
+
+<article class="content-article mt-8">
+  <h2>Exchange Requests</h2>
+  <div class="admin-table-wrap">
+    <table>
+      <thead><tr><th>From</th><th>To</th><th>Message</th><th>Status</th><th>Actions</th></tr></thead>
+      <tbody>
+      {% for e in exchange_list %}
+      <tr>
+        <td>#{{ e.from_site_id }}</td><td>#{{ e.to_site_id }}</td>
+        <td style="max-width:320px">{{ e.message[:90] }}</td>
+        <td>{{ e.status }}</td>
+        <td><a class="btn btn-primary btn-sm" href="{{ url_for('admin_exchange_done', exchange_id=e.id) }}">Mark Done</a></td>
+      </tr>
+      {% else %}
+      <tr><td colspan="5" style="text-align:center;color:#8a97ad;padding:20px">No exchange requests yet</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</article>
+{% endblock %}

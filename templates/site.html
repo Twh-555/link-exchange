@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+{% block title %}{{ s.site_name }} – DR {{ s.dr }} | Free Link Exchange Profile | TWH{% endblock %}
+{% block canonical %}{{ site_url }}/link-exchange/site/{{ s.id }}/{% endblock %}
+{% block meta_desc %}{{ s.site_name }} ({{ s.site_url }}) — {{ s.niche }} niche, DR {{ s.dr }}. A free link exchange site on TWH's directory. Request a reciprocal link exchange or view the profile.{% endblock %}
+
+{% block content %}
+<section class="hero-section text-center">
+  <div class="hero-badge"><i class="fa-solid fa-globe"></i> Site Profile</div>
+  <h1 class="page-title"><span class="gradient-text">{{ s.site_name }}</span></h1>
+  <p class="page-subtitle">
+    {{ s.site_url }} • {{ s.niche }} • Listed on TWH's free link exchange directory.
+  </p>
+</section>
+
+<div class="generator-grid" style="max-width:640px;margin:0 auto">
+  <div class="calc-card">
+    <div class="card-header">
+      <h2><i class="fa-solid fa-chart-simple"></i> Site Details</h2>
+      <span class="step-badge">DR {{ s.dr }}</span>
+    </div>
+
+    <div class="site-meta" style="margin-bottom:14px">
+      <span class="badge-tag tag-dr">DR {{ s.dr }}</span>
+      <span class="badge-tag tag-da">DA {{ s.da }}</span>
+      {% for n in (s.niche or '').split(', ') %}
+        {% if n %}<span class="badge-tag tag-niche">{{ n }}</span>{% endif %}
+      {% endfor %}
+      <span class="badge-tag tag-free">Link Exchange</span>
+    </div>
+
+    <p class="desc" style="font-size:1rem;color:var(--muted,#5a6b85);line-height:1.7">{{ s.description }}</p>
+
+    <div class="site-actions" style="margin-top:18px">
+      <a class="btn btn-primary" href="{{ s.site_url }}" target="_blank" rel="nofollow"><i class="fa-solid fa-arrow-up-right-from-square"></i> Visit Site</a>
+      <a class="btn btn-primary" href="{{ url_for('exchange', site_id=s.id) }}"><i class="fa-solid fa-arrow-right-arrow-left"></i> Request Link Exchange — Free</a>
+    </div>
+  </div>
+</div>
+
+<div class="guest-box" style="max-width:640px;margin:20px auto">
+  💼 <b>Don't want to wait?</b> Order a <b>guaranteed guest post</b> on this site or other premium
+  sites — <a href="{{ site_url }}/guest-post-price-checker/">see prices here</a>. One-way link,
+  published in 24-48h.
+</div>
+{% endblock %}

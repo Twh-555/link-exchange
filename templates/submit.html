@@ -1,0 +1,158 @@
+{% extends 'base.html' %}
+{% block title %}Add Your Site – Free Link Exchange Sites Listing | TWH{% endblock %}
+{% block canonical %}{{ site_url }}/link-exchange/submit{% endblock %}
+{% block meta_desc %}List your website free on TWH's link exchange directory. Get discovered by niche, find free link exchange partners, and build reciprocal backlinks organically.{% endblock %}
+
+{% block content %}
+<section class="hero-section text-center">
+  <div class="hero-badge"><i class="fa-solid fa-plus"></i> Free Listing • No Signup</div>
+  <h1 class="page-title"><span class="gradient-text">Add Your Website — Free</span></h1>
+  <p class="page-subtitle">
+    Get listed in our <b>link exchange directory</b>. Other site owners will contact you for
+    exchanges. Want a <b>guaranteed guest post</b> instead?
+    <a href="{{ site_url }}/guest-post-price-checker/">Check guest post prices here</a>.
+  </p>
+</section>
+
+<div class="generator-grid" style="max-width:640px;margin:0 auto">
+  <div class="calc-card">
+    <div class="card-header">
+      <h2><i class="fa-solid fa-list-check"></i> Site Details</h2>
+      <span class="step-badge">Free</span>
+    </div>
+
+    {% if msg %}
+    <div class="{{ 'msg-ok' if ok else 'msg-err' }}">{{ msg }}</div>
+    {% endif %}
+
+    <form method="post" style="display:flex;flex-direction:column;gap:4px">
+      <div class="form-group">
+        <label class="field-label">Site Name</label>
+        <input class="form-control" name="site_name" required placeholder="My Awesome Blog">
+      </div>
+      <div class="form-group">
+        <label class="field-label">Site URL</label>
+        <input class="form-control" name="site_url" required placeholder="myblog.com">
+      </div>
+      <div class="form-group">
+        <label class="field-label">Email (for exchange requests)</label>
+        <input class="form-control" type="email" name="email" required placeholder="you@email.com">
+      </div>
+      <div class="form-group">
+        <label class="field-label">Niche (select 3-5)</label>
+        <p class="form-note" style="margin-top:2px"><i class="fa-solid fa-circle-info"></i> Choose at least 3 and at most 5 niches that match your website.</p>
+        <div class="multi-select" id="nicheSelect">
+          <button type="button" class="ms-trigger form-control" id="nicheTrigger" aria-haspopup="listbox" aria-expanded="false">
+            <span class="ms-placeholder">Select niches...</span>
+            <span class="ms-chips" id="msChips"></span>
+            <i class="fa-solid fa-chevron-down ms-caret"></i>
+          </button>
+          <div class="ms-panel" id="msPanel" role="listbox" aria-multiselectable="true">
+            <div class="ms-search-wrap">
+              <i class="fa-solid fa-magnifying-glass"></i>
+              <input type="text" class="ms-search" id="msSearch" placeholder="Search niches...">
+            </div>
+            <div class="ms-options" id="msOptions">
+              {% for n in niches %}{% if n != 'All' %}
+              <label class="ms-option">
+                <input type="checkbox" name="niche" value="{{ n }}">
+                <span class="ms-opt-label">{{ n }}</span>
+                <span class="ms-check"><i class="fa-solid fa-check"></i></span>
+              </label>
+              {% endif %}{% endfor %}
+            </div>
+          </div>
+        </div>
+        <p class="form-note" id="nicheCountNote" style="margin-top:6px"><i class="fa-solid fa-hashtag"></i> Selected: <span id="nicheCount">0</span> / 5 (min 3)</p>
+      </div>
+      <div class="form-group">
+        <label class="field-label">Short Description (max 200)</label>
+        <textarea class="form-control" name="description" maxlength="200" rows="3" placeholder="What is your site about?"></textarea>
+      </div>
+      <div class="form-row-2">
+        <div class="form-group">
+          <label class="field-label">Domain Rating (DR) <span class="req-star">*</span></label>
+          <input class="form-control" type="number" name="dr" min="0" max="100" required placeholder="0-100">
+        </div>
+        <div class="form-group">
+          <label class="field-label">Domain Authority (DA) <span class="req-star">*</span></label>
+          <input class="form-control" type="number" name="da" min="0" max="100" required placeholder="0-100">
+        </div>
+      </div>
+      <button class="btn btn-primary btn-block btn-lg" type="submit"><i class="fa-solid fa-paper-plane"></i> Submit Listing — Free</button>
+    </form>
+  </div>
+</div>
+
+<div class="hint-box" style="max-width:640px;margin:20px auto">
+  💼 <b>Don't want to wait for exchanges?</b> Order a <b>guaranteed guest post</b> on high-DR sites —
+  one-way link, published in 24-48h. <a href="{{ site_url }}/guest-post-price-checker/">See prices here</a>.
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  // ===== Multi-select niche dropdown =====
+  const trigger = document.getElementById('nicheTrigger');
+  const panel = document.getElementById('msPanel');
+  const chips = document.getElementById('msChips');
+  const countEl = document.getElementById('nicheCount');
+  const note = document.getElementById('nicheCountNote');
+  const search = document.getElementById('msSearch');
+  const optionsWrap = document.getElementById('msOptions');
+  const MAX = 5, MIN = 3;
+  const allBoxes = Array.from(document.querySelectorAll('input[name="niche"]'));
+
+  // open/close
+  trigger.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const open = panel.classList.toggle('open');
+    trigger.setAttribute('aria-expanded', open);
+    if (open) { search.value=''; filterOptions(''); search.focus(); }
+  });
+  document.addEventListener('click', (e) => {
+    if (!document.getElementById('nicheSelect').contains(e.target)) {
+      panel.classList.remove('open');
+      trigger.setAttribute('aria-expanded','false');
+    }
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') { panel.classList.remove('open'); trigger.setAttribute('aria-expanded','false'); }
+  });
+
+  // search filter
+  function filterOptions(q){
+    const query = q.toLowerCase();
+    optionsWrap.querySelectorAll('.ms-option').forEach(opt => {
+      opt.style.display = opt.textContent.toLowerCase().includes(query) ? '' : 'none';
+    });
+  }
+  search.addEventListener('input', () => filterOptions(search.value));
+
+  // selection change: chips + counter + max-5 guard
+  function refresh(){
+    const sel = allBoxes.filter(b => b.checked);
+    const n = sel.length;
+    countEl.textContent = n;
+    if (n < MIN || n > MAX) note.style.color = '#e02424'; else note.style.color = '#0a7a3d';
+    // disable unchecked boxes when at max
+    allBoxes.forEach(b => { if (!b.checked) b.disabled = (n >= MAX); });
+    // chips
+    chips.innerHTML = '';
+    sel.forEach(b => {
+      const c = document.createElement('span');
+      c.className = 'ms-chip';
+      c.innerHTML = b.value + ' <span class="ms-chip-x" title="Remove">&times;</span>';
+      c.querySelector('.ms-chip-x').addEventListener('click', (e) => {
+        e.stopPropagation();
+        b.checked = false; refresh();
+      });
+      chips.appendChild(c);
+    });
+    const ph = document.querySelector('.ms-placeholder');
+    ph.style.display = n ? 'none' : '';
+  }
+  allBoxes.forEach(b => b.addEventListener('change', refresh));
+  refresh();
+</script>
+{% endblock %}

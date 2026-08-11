@@ -1,0 +1,308 @@
+{% extends 'base.html' %}
+{% block title %}Link Exchange Sites – Free Link Exchange Directory (2026) | TWH{% endblock %}
+{% block canonical %}{{ site_url }}/link-exchange/{% endblock %}
+{% block meta_desc %}Find free link exchange sites for backlinks. List your website, find link exchange partners by niche, and build authority links organically.{% endblock %}
+{% block og_title %}Link Exchange Sites – Free Link Exchange Directory | TWH{% endblock %}
+{% block og_desc %}Find free link exchange sites for backlinks. List your website and find link exchange partners by niche — no signup needed.{% endblock %}
+{% block tw_title %}Link Exchange Sites – Free Link Exchange Directory | TWH{% endblock %}
+{% block tw_desc %}Find free link exchange sites for backlinks. List your website and find link exchange partners by niche — no signup needed.{% endblock %}
+{% block extra_head %}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        {"@type": "ListItem", "position": 1, "name": "Home", "item": "https://thewebhospitality.com/"},
+        {"@type": "ListItem", "position": 2, "name": "Free Tools", "item": "https://thewebhospitality.com/#free-tools"},
+        {"@type": "ListItem", "position": 3, "name": "Link Exchange Directory", "item": "{{ site_url }}/link-exchange/"}
+      ]
+    },
+    {
+      "@type": "WebApplication",
+      "name": "Free Link Exchange Directory",
+      "url": "{{ site_url }}/link-exchange/",
+      "description": "Free link exchange directory for website owners to find link exchange partners by niche and build backlinks organically.",
+      "applicationCategory": "WebApplication",
+      "operatingSystem": "All",
+      "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"}
+    },
+    {
+      "@type": "ItemList",
+      "name": "Free Link Exchange Directory",
+      "numberOfItems": {{ sites|length }},
+      "itemListElement": [
+        {% for s in sites %}
+        {"@type": "ListItem", "position": {{ loop.index }}, "url": "{{ s.site_url }}", "name": "{{ s.site_name }}"}{% if not loop.last %},{% endif %}
+        {% endfor %}
+      ]
+    },
+    {
+      "@type": "HowTo",
+      "name": "How to Do a Link Exchange",
+      "step": [
+        {"@type": "HowToStep", "position": 1, "name": "List your website", "text": "Click Add Your Site and enter your site name, URL, email, niche, and Domain Rating."},
+        {"@type": "HowToStep", "position": 2, "name": "Browse partner sites", "text": "Search the directory by keyword or filter by niche to find relevant partner websites."},
+        {"@type": "HowToStep", "position": 3, "name": "Send exchange requests", "text": "Request a free link exchange with sites that match your niche and authority level."},
+        {"@type": "HowToStep", "position": 4, "name": "Place reciprocal links", "text": "Once a partner accepts, place each other's links contextually in your content."}
+      ]
+    },
+    {
+      "@type": "FAQPage",
+      "mainEntity": [
+        {"@type": "Question", "name": "What is a link exchange?", "acceptedAnswer": {"@type": "Answer", "text": "A link exchange is a reciprocal linking arrangement between two website owners who agree to place each other's links on their own sites. Both sides gain a backlink, and when the sites are topically related, the exchange can pass real authority and referral traffic."}},
+        {"@type": "Question", "name": "Is this link exchange directory free?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. Listing your website in The Web Hospitality link exchange directory is completely free. You can browse all listings and contact other site owners without any cost or signup."}},
+        {"@type": "Question", "name": "How do I find link exchange partners?", "acceptedAnswer": {"@type": "Answer", "text": "Search the directory by niche or keyword, then send a free exchange request to sites with similar authority. A good match is a site in your niche with a similar or slightly higher Domain Rating (DR)."}},
+        {"@type": "Question", "name": "Are link exchanges good for SEO?", "acceptedAnswer": {"@type": "Answer", "text": "Relevant, niche-matched reciprocal links can help SEO when done in moderation. Google discourages large-scale link schemes, so keep reciprocal links under roughly 10% of your profile and focus on quality over quantity."}},
+        {"@type": "Question", "name": "How many link exchange partners should I have?", "acceptedAnswer": {"@type": "Answer", "text": "A few high-quality, relevant partners (5-20) are better than dozens of irrelevant ones. Focus on niche relevance and similar authority to avoid looking spammy to Google."}},
+        {"@type": "Question", "name": "What is a three-way link exchange?", "acceptedAnswer": {"@type": "Answer", "text": "A three-way (ABC) link exchange involves three sites: Site A links to Site B, Site B links to Site C, and Site C links to Site A. Because no two sites link directly to each other, it avoids the obvious reciprocity pattern Google looks for."}}
+      ]
+    }
+  ]
+}
+</script>
+{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero-section text-center">
+  <div class="hero-badge">
+    <i class="fa-solid fa-link"></i> 100% Free Link Exchange Sites • No Signup
+  </div>
+  <h1 class="page-title">
+    <span class="gradient-text">Link Exchange Sites & Free Link Exchange Directory</span>
+  </h1>
+  <p class="page-subtitle">
+    Find <strong>link exchange sites</strong> and get <strong>free link exchange</strong> partners in
+    your niche. List your website free, connect with relevant site owners, and build quality backlinks
+    organically. No signup required to browse.
+  </p>
+  <div class="hero-actions" style="margin-top:18px;display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
+    <a class="btn btn-primary" href="{{ url_for('submit') }}"><i class="fa-solid fa-plus"></i> Add Your Site (Free)</a>
+    <a class="btn btn-primary btn-outline" href="{{ url_for('admin') }}"><i class="fa-solid fa-shield-halved"></i> Admin</a>
+  </div>
+</section>
+
+<!-- AEO Direct Answer (featured snippet) -->
+<section class="content-article" style="margin-top:28px">
+  <h2 style="font-size:1.25rem">What Are Link Exchange Sites?</h2>
+  <p><strong>Link exchange sites</strong> are directories and platforms where website owners connect to
+    place reciprocal links on each other's websites. A <strong>free link exchange</strong> means you can
+    list your site and find partners at no cost — ideal for small sites and blogs building backlinks on a
+    budget. Relevant, niche-matched exchanges help both sites earn authority and improve search visibility.</p>
+</section>
+
+<!-- How it works hint -->
+<div class="hint-box">
+  💡 <b>How it works:</b> Add your site free → get listed with your niche & DR → other site
+  owners contact you for link exchange → or order a <b>guaranteed guest post</b> on premium
+  sites (starting $10) for one-way links.
+</div>
+
+<!-- Filters -->
+<div class="filter-bar">
+  <input class="form-control" id="q" placeholder="Search sites by name or keyword...">
+  <select class="form-control" id="niche" style="max-width:240px">
+    {% for n in niches %}<option value="{{ n }}">{{ n }}</option>{% endfor %}
+  </select>
+</div>
+
+<!-- Directory Grid -->
+<div class="directory-grid" id="grid">
+  {% for s in sites %}
+  <div class="site-card" data-name="{{ s.site_name.lower() }}" data-niche="{{ s.niche }}">
+    <div class="site-card-top">
+      <h3><a href="{{ s.site_url }}" target="_blank" rel="nofollow">{{ s.site_name }}</a></h3>
+    </div>
+    <p class="desc">{{ s.description[:100] }}</p>
+    <div class="site-meta">
+      <span class="badge-tag tag-dr">DR {{ s.dr }}</span>
+      <span class="badge-tag tag-da">DA {{ s.da }}</span>
+      {% for n in (s.niche or '').split(', ') %}
+        {% if n %}<span class="badge-tag tag-niche">{{ n }}</span>{% endif %}
+      {% endfor %}
+      <span class="badge-tag tag-free">Link Exchange</span>
+    </div>
+    <div class="site-actions">
+      <a class="btn btn-primary btn-sm" href="{{ url_for('exchange', site_id=s.id) }}"><i class="fa-solid fa-arrow-right-arrow-left"></i> Request Exchange</a>
+      <a class="btn btn-primary btn-outline btn-sm" href="{{ url_for('site_page', site_id=s.id) }}"><i class="fa-solid fa-eye"></i> Profile</a>
+    </div>
+  </div>
+  {% else %}
+  <div class="empty-state" style="grid-column:1/-1">
+    <i class="fa-solid fa-link-slash"></i>
+    <p>No sites yet — be the first to <a href="{{ url_for('submit') }}">add your site</a>!</p>
+  </div>
+  {% endfor %}
+</div>
+
+<!-- SEO Content -->
+<section class="seo-content-section mt-12">
+  <article class="content-article">
+    <h2>Understanding Link Exchange for SEO</h2>
+    <p>
+      A link exchange is a reciprocal linking arrangement between two website owners who agree to place
+      each other's links on their own sites. Both sides gain a backlink — and when the two sites are
+      topically related, the exchange can pass real authority and referral traffic.
+    </p>
+    <p>
+      TWH's directory makes this process easy: list your site free, filter partners by niche and Domain
+      Rating, and send an exchange request directly. No signup is required to browse.
+    </p>
+
+    <div class="feature-card-grid">
+      <div class="feature-card">
+        <div class="feat-icon"><i class="fa-solid fa-bolt"></i></div>
+        <h3>100% Free Listing</h3>
+        <p>Add your website free with zero signup. Browse the entire directory without creating an account.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feat-icon"><i class="fa-solid fa-magnifying-glass"></i></div>
+        <h3>Niche Filtering</h3>
+        <p>Find relevant partners across 14+ niches — Tech, Finance, Travel, Food, Health, Real Estate and more.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feat-icon"><i class="fa-solid fa-chart-line"></i></div>
+        <h3>DR Sorted Listings</h3>
+        <p>Every site shows its Domain Rating so you can target partners with similar authority to yours.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feat-icon"><i class="fa-solid fa-envelope"></i></div>
+        <h3>Direct Contact</h3>
+        <p>Send a free exchange request and the site owner receives your details directly.</p>
+      </div>
+    </div>
+  </article>
+
+  <article class="content-article mt-8">
+    <h2>How Link Exchange Works</h2>
+    <ol class="styled-list">
+      <li><strong>Add your site</strong> — enter name, URL, email, niche and optional Domain Rating.</li>
+      <li><strong>Get listed</strong> — your site appears in the directory with its niche and authority badge.</li>
+      <li><strong>Find partners</strong> — search by keyword or filter by niche to find relevant websites.</li>
+      <li><strong>Send a request</strong> — the site owner receives your details and contacts you to arrange links.</li>
+    </ol>
+  </article>
+
+  <article class="content-article mt-8">
+    <h2>Types of Link Exchanges</h2>
+    <p>Not every exchange is the same. These are the three most common arrangements:</p>
+    <div class="table-responsive">
+      <table class="twh-table">
+        <thead>
+          <tr>
+            <th>Type</th>
+            <th>How It Works</th>
+            <th>Best For</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Direct Reciprocal</strong></td>
+            <td>Site A links to Site B, and Site B links back to Site A.</td>
+            <td>Bloggers with similar audiences and authority.</td>
+          </tr>
+          <tr>
+            <td><strong>Three-Way (ABC)</strong></td>
+            <td>Site A links to Site B, Site B links to Site C, Site C links to Site A — no direct reciprocity.</td>
+            <td>Sites that want to avoid obvious link exchanges.</td>
+          </tr>
+          <tr>
+            <td><strong>Guest Post Swap</strong></td>
+            <td>Both owners publish guest posts on each other's sites with contextual links.</td>
+            <td>Sites that want editorial, content-based links.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </article>
+
+  <article class="content-article mt-8">
+    <h2>Are Link Exchanges Safe? Google's Stance</h2>
+    <p>
+      Google has historically discouraged large-scale reciprocal link schemes. The practical consensus among
+      SEO professionals (see <a href="https://seobility.net/en/wiki/Link_Exchange" rel="nofollow">Seobility</a>,
+      <a href="https://buildingbacklinks.io/link-exchange/" rel="nofollow">BuildingBacklinks.io</a> and
+      <a href="https://seo.co/link-exchange/" rel="nofollow">SEO.co</a>) is that a <strong>small number of
+      relevant, niche-matched exchanges is safe</strong> — while dozens of irrelevant link trades look
+      manipulative and can hurt rankings.
+    </p>
+    <p>
+      <strong>The 10% rule:</strong> keep reciprocal links under roughly 10% of your total backlink profile.
+      Focus on relevance and quality over quantity, and always place partner links contextually inside
+      content rather than in site-wide footers.
+    </p>
+  </article>
+
+  <article class="content-article mt-8">
+    <h2>How to Find Quality Link Exchange Partners</h2>
+    <ul class="styled-list">
+      <li><strong>Match niches</strong> — a travel site exchanging with another travel site is far more valuable than a random swap.</li>
+      <li><strong>Compare authority</strong> — target sites with a Domain Rating similar to or slightly higher than yours.</li>
+      <li><strong>Check activity</strong> — prefer sites that publish regularly and get real traffic.</li>
+      <li><strong>Avoid red flags</strong> — skip sites stuffed with ads, thin content, or dozens of footer links.</li>
+      <li><strong>Scale with guest posts</strong> — for one-way links without reciprocity, use the <a href="{{ site_url }}/guest-post-price-checker/">guest post service</a>.</li>
+    </ul>
+  </article>
+
+  <article class="content-article mt-8">
+    <h2>Link Exchange FAQ</h2>
+    <div class="faq-accordion" id="faqAccordion">
+      <div class="faq-item">
+        <h3 class="faq-question">What is a link exchange?</h3>
+        <div class="faq-answer"><p>A link exchange is a reciprocal linking arrangement between two website owners who agree to place each other's links on their own sites. Both sides gain a backlink, and when the sites are topically related, the exchange can pass real authority and referral traffic.</p></div>
+      </div>
+      <div class="faq-item">
+        <h3 class="faq-question">Is this link exchange directory free?</h3>
+        <div class="faq-answer"><p>Yes. Listing your website in The Web Hospitality link exchange directory is completely free. You can browse all listings and contact other site owners without any cost or signup.</p></div>
+      </div>
+      <div class="faq-item">
+        <h3 class="faq-question">How do I find link exchange partners?</h3>
+        <div class="faq-answer"><p>Search the directory by niche or keyword, then send a free exchange request to sites with similar authority. A good match is a site in your niche with a similar or slightly higher Domain Rating (DR).</p></div>
+      </div>
+      <div class="faq-item">
+        <h3 class="faq-question">Are link exchanges good for SEO?</h3>
+        <div class="faq-answer"><p>Relevant, niche-matched reciprocal links can help SEO when done in moderation. Google discourages large-scale link schemes, so keep reciprocal links under roughly 10% of your profile and focus on quality over quantity.</p></div>
+      </div>
+      <div class="faq-item">
+        <h3 class="faq-question">How many link exchange partners should I have?</h3>
+        <div class="faq-answer"><p>A few high-quality, relevant partners (5-20) are better than dozens of irrelevant ones. Focus on niche relevance and similar authority to avoid looking spammy to Google.</p></div>
+      </div>
+      <div class="faq-item">
+        <h3 class="faq-question">What is a three-way link exchange?</h3>
+        <div class="faq-answer"><p>A three-way (ABC) link exchange involves three sites: Site A links to Site B, Site B links to Site C, and Site C links to Site A. Because no two sites link directly to each other, it avoids the obvious reciprocity pattern Google looks for.</p></div>
+      </div>
+    </div>
+  </article>
+
+  <article class="content-article mt-8">
+    <h2>More Free SEO & Marketing Tools</h2>
+    <p>Looking for more ways to grow? Try our other <a href="{{ site_url }}/#free-tools">free SEO tools</a>:</p>
+    <ul class="styled-list">
+      <li><a href="{{ site_url }}/dr-checker/">Free Domain Rating (DR) Checker</a></li>
+      <li><a href="{{ site_url }}/spam-score-checker/">Free Spam Score Checker</a></li>
+      <li><a href="{{ site_url }}/bulk-da-pa-checker/">Bulk DA PA Checker</a></li>
+      <li><a href="{{ site_url }}/free-keyword-tool/">Free Keyword Tool</a></li>
+      <li><a href="{{ site_url }}/instagram-hashtag-generator/">Free Instagram Hashtag Generator</a></li>
+    </ul>
+  </article>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  const q=document.getElementById('q'), n=document.getElementById('niche');
+  function filter(){
+    const query=q.value.toLowerCase();
+    const niche=n.value;
+    document.querySelectorAll('#grid .site-card').forEach(c=>{
+      const okQ=c.dataset.name.includes(query)||!query;
+      const niches=(c.dataset.niche||'').toLowerCase().split(', ');
+      const okN=niche==='All'||niches.includes(niche.toLowerCase());
+      c.style.display=(okQ&&okN)?'':'none';
+    });
+  }
+  q.addEventListener('input',filter); n.addEventListener('change',filter);
+</script>
+{% endblock %}

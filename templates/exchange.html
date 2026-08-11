@@ -1,0 +1,55 @@
+{% extends 'base.html' %}
+{% block title %}Link Exchange Request – {{ site.site_name }} | Free Link Exchange Sites | TWH{% endblock %}
+{% block canonical %}{{ site_url }}/link-exchange/exchange/{{ site.id }}{% endblock %}
+{% block meta_desc %}Send a free link exchange request to {{ site.site_name }} (DR {{ site.dr }}, {{ site.niche }}). Build reciprocal backlinks with relevant link exchange sites.{% endblock %}
+
+{% block content %}
+<section class="hero-section text-center">
+  <div class="hero-badge"><i class="fa-solid fa-arrow-right-arrow-left"></i> Free Exchange Request</div>
+  <h1 class="page-title"><span class="gradient-text">Link Exchange Request</span></h1>
+  <p class="page-subtitle">Send a free exchange request to this site owner. They'll get your email and contact you.</p>
+</section>
+
+<div class="generator-grid" style="max-width:640px;margin:0 auto">
+  <div class="calc-card">
+    <div class="card-header">
+      <h2><i class="fa-solid fa-bullseye"></i> Request to: {{ site.site_name }}</h2>
+      <span class="step-badge">DR {{ site.dr }}</span>
+    </div>
+
+    <div class="hint-box" style="margin:0 0 16px">
+      <b>{{ site.site_name }}</b> — {{ site.site_url }} • {{ site.niche }} • DR {{ site.dr }}
+    </div>
+
+    {% if msg %}
+    <div class="msg-ok">{{ msg }}</div>
+    {% endif %}
+
+    <form method="post" style="display:flex;flex-direction:column;gap:4px">
+      <div class="form-group">
+        <label class="field-label">Your Name</label>
+        <input class="form-control" name="your_name" required>
+      </div>
+      <div class="form-group">
+        <label class="field-label">Your Email</label>
+        <input class="form-control" type="email" name="your_email" required>
+      </div>
+      <div class="form-group">
+        <label class="field-label">Your Website</label>
+        <input class="form-control" name="your_site" required placeholder="yoursite.com">
+      </div>
+      <div class="form-group">
+        <label class="field-label">Message (what links do you want to exchange?)</label>
+        <textarea class="form-control" name="message" rows="4" required placeholder="Hi! I run a tech blog with DR 25. I'd like to exchange a homepage link with you..."></textarea>
+      </div>
+      <button class="btn btn-primary btn-block btn-lg" type="submit"><i class="fa-solid fa-paper-plane"></i> Send Exchange Request — Free</button>
+    </form>
+
+    <div class="guest-box">
+      💼 <b>Don't want to wait?</b> Order a <b>guaranteed guest post</b> on this site or other
+      premium sites — <a href="{{ site_url }}/guest-post-price-checker/">see prices here</a>.
+      One-way link, published in 24-48h.
+    </div>
+  </div>
+</div>
+{% endblock %}
