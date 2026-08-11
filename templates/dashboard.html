@@ -14,9 +14,54 @@
   </p>
   <div class="hero-actions" style="margin-top:16px;display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
     <a class="btn btn-primary" href="{{ url_for('submit') }}"><i class="fa-solid fa-plus"></i> Add Another Site</a>
+    <a class="btn btn-primary btn-outline" href="{{ url_for('index') }}"><i class="fa-solid fa-arrow-right-arrow-left"></i> Find Exchange Partners</a>
     <a class="btn btn-primary btn-outline" href="{{ url_for('logout') }}"><i class="fa-solid fa-right-from-bracket"></i> Logout</a>
   </div>
 </section>
+
+<!-- Incoming Exchange Requests -->
+<section class="seo-content-section" style="max-width:720px;margin:28px auto 0">
+  <div class="content-article">
+    <h2><i class="fa-solid fa-inbox"></i> Incoming Exchange Requests ({{ requests|length }})</h2>
+    {% if requests %}
+    <div class="admin-table-wrap" style="margin-top:12px">
+      <table style="width:100%;border-collapse:collapse;font-size:.85rem">
+        <thead>
+          <tr style="background:#f8faff;text-align:left">
+            <th style="padding:10px 14px">For Site</th>
+            <th style="padding:10px 14px">Request Details</th>
+            <th style="padding:10px 14px">Status</th>
+            <th style="padding:10px 14px">Date</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for r in requests %}
+          <tr style="border-top:1px solid var(--border,#e3e8f2)">
+            <td style="padding:10px 14px"><b>{{ r._site_name }}</b></td>
+            <td style="padding:10px 14px;color:#3a4a63;max-width:300px">{{ r.message[:100] }}</td>
+            <td style="padding:10px 14px">
+              {% if r.status == 'done' %}<span style="color:#0a7a3d;font-weight:600">✅ Done</span>
+              {% else %}<span style="color:#b8860b;font-weight:600">⏳ New</span>{% endif %}
+            </td>
+            <td style="padding:10px 14px;color:#8a97ad">{{ r.created_at[:10] }}</td>
+          </tr>
+          {% else %}
+          <tr><td colspan="4" style="padding:16px;text-align:center;color:#8a97ad">No exchange requests yet — <a href="{{ url_for('index') }}">find partners in the directory</a>.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <p style="color:var(--muted,#5a6b85)">
+      No exchange requests yet. Once your site is approved, other site owners can send you requests —
+      they'll appear here. Meanwhile, <a href="{{ url_for('index') }}">browse the directory</a> and send your own requests.
+    </p>
+    {% endif %}
+  </div>
+</section>
+
+<!-- My Listings -->
+<h2 style="max-width:720px;margin:36px auto 0;font-size:1.25rem"><i class="fa-solid fa-globe"></i> My Listings</h2>
 
 <div class="directory-grid" style="margin-top:24px">
   {% for s in sites %}

@@ -459,7 +459,25 @@ def dashboard():
     sites = db.execute(
         "SELECT * FROM sites WHERE email=? ORDER BY id DESC",
         (session["user_email"],)).fetchall()
-    return render_template("dashboard.html", sites=sites, site_url=SITE_URL)
+    # user's site IDs (active ones can receive exchange requests)
+    site_ids = [s["id"] for s in sites]
+    # incoming exchange requests for user's sites
+    requests = []
+    if site_ids:
+        placeholders = ",".join("?" for _ in site_ids)
+        requests = db.execute(
+            f"SELECT * FROM exchanges WHERE to_site_id IN ({placeholders}) ORDER BY id DESC LIMIT 20",
+            site_ids).fetchall()
+    # resolve site names for requests
+    resolved = []
+    for r in requests:
+        rd = dict(r)
+        r_site = db.execute("SELECT site_name, site_url FROM sites WHERE id=?", (r["to_site_id"],)).fetchone()
+        rd["_site_name"] = r_site["site_name"] if r_site else "?"
+        rd["_site_url"] = r_site["site_url"] if r_site else "?"
+        resolved.append(rd)
+    return render_template("dashboard.html", sites=sites, requests=resolved,
+                           site_url=SITE_URL)
 
 
 @app.route("/logout")
