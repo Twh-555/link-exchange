@@ -54,6 +54,24 @@ CONTACT_EMAIL = os.environ.get("CONTACT_EMAIL", "hello@thewebhospitality.com")
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "change-me-in-production")
 
+ADMIN_USERNAME = os.environ.get("ADMIN_USERNAME", "admin")
+ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "twh@linkexchange")
+
+from functools import wraps
+
+
+def admin_required(f):
+    @wraps(f)
+    def wrapper(*args, **kwargs):
+        auth = request.authorization
+        if not auth or auth.username != ADMIN_USERNAME or auth.password != ADMIN_PASSWORD:
+            return app.response_class(
+                "Unauthorized", status=401,
+                headers={"WWW-Authenticate": 'Basic realm="TWH Admin"'}
+            )
+        return f(*args, **kwargs)
+    return wrapper
+
 # ---------- Email config (SMTP) ----------
 SMTP_HOST = os.environ.get("SMTP_HOST", "")
 SMTP_PORT = int(os.environ.get("SMTP_PORT", "587"))
@@ -252,7 +270,7 @@ def submit():
                     msg = "✅ Site submitted! Our team will review it — once approved, your site appears in the directory for link exchanges."
                     ok = True
     return render_template("submit.html", msg=msg, ok=ok, niches=NICHES,
-                           site_url=SITE_URL)
+                            site_url=SITE_URL)
 
 
 @app.route("/exchange/<int:site_id>", methods=["GET", "POST"])
@@ -384,6 +402,7 @@ def exchange(site_id):
 
 
 @app.route("/admin")
+@admin_required
 def admin():
     db = get_db()
     pending_sites = db.execute(
@@ -399,6 +418,7 @@ def admin():
 
 
 @app.route("/admin/approve/<int:site_id>")
+@admin_required
 def admin_approve(site_id):
     db = get_db()
     db.execute("UPDATE sites SET status='active', approved_at=? WHERE id=?",
@@ -408,6 +428,7 @@ def admin_approve(site_id):
 
 
 @app.route("/admin/reject/<int:site_id>")
+@admin_required
 def admin_reject(site_id):
     db = get_db()
     db.execute("UPDATE sites SET status='rejected' WHERE id=?", (site_id,))
@@ -416,7 +437,8 @@ def admin_reject(site_id):
 
 
 @app.route("/admin/exchange/<int:exchange_id>/done")
-def admin_exchange_done(exchange_id):
+@admin_required
+def exchange_done(exchange_id):
     db = get_db()
     db.execute("UPDATE exchanges SET status='done' WHERE id=?", (exchange_id,))
     db.commit()

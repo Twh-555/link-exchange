@@ -53,7 +53,7 @@
         <td>#{{ e.from_site_id }}</td><td>#{{ e.to_site_id }}</td>
         <td style="max-width:320px">{{ e.message[:90] }}</td>
         <td>{{ e.status }}</td>
-        <td><a class="btn btn-primary btn-sm" href="{{ url_for('admin_exchange_done', exchange_id=e.id) }}">Mark Done</a></td>
+        <td><a class="btn btn-primary btn-sm" href="{{ url_for('exchange_done', exchange_id=e.id) }}">Mark Done</a></td>
       </tr>
       {% else %}
       <tr><td colspan="5" style="text-align:center;color:#8a97ad;padding:20px">No exchange requests yet</td></tr>
