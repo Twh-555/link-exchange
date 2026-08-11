@@ -339,7 +339,8 @@ def submit():
 </center>
 </body></html>""")
     return render_template("submit.html", msg=msg, ok=ok, niches=NICHES,
-                            site_url=SITE_URL)
+                            site_url=SITE_URL,
+                            site_email_hint=email if email else "")
 
 
 @app.route("/status/<token>")

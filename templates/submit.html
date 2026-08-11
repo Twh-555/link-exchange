@@ -22,7 +22,31 @@
     </div>
 
     {% if msg %}
-    <div class="{{ 'msg-ok' if ok else 'msg-err' }}">{{ msg }}</div>
+      {% if ok %}
+      <div class="success-card" style="background:#f0faf4;border:1px solid #bfe8cd;border-radius:12px;padding:22px;margin-bottom:20px;text-align:left">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
+          <div style="width:44px;height:44px;border-radius:50%;background:#0a7a3d;color:#fff;display:flex;align-items:center;justify-content:center;font-size:1.3rem;flex-shrink:0"><i class="fa-solid fa-check"></i></div>
+          <div>
+            <div style="font-weight:800;color:#0a7a3d;font-size:1.05rem">Site Submitted Successfully!</div>
+            <div style="font-size:.85rem;color:#3a7d52">Our team will review your listing</div>
+          </div>
+        </div>
+        <div style="background:#fff;border-radius:10px;padding:16px 18px;margin-bottom:14px">
+          <div style="font-weight:700;color:var(--dark,#0f1b33);margin-bottom:10px;font-size:.95rem">📋 What happens next:</div>
+          <ol style="margin:0;padding-left:20px;display:flex;flex-direction:column;gap:8px;font-size:.88rem;color:#3a4a63">
+            <li><b>✅ Check your email</b> — we've sent a welcome mail with your submission details.</li>
+            <li><b>📩 Confirm your listing</b> — open the <b>status link</b> from the mail anytime to track your site (Pending → Approved).</li>
+            <li><b>⏳ Approval</b> — our team reviews your site (usually within 24 hours).</li>
+            <li><b>🌐 Go live</b> — once approved, your site appears in the directory and other site owners can send you exchange requests.</li>
+          </ol>
+        </div>
+        <div style="font-size:.82rem;color:#5a6b85;background:#fffbe9;border:1px solid #ffe4a1;border-radius:8px;padding:10px 14px">
+          📬 <b>Mail nahi mila?</b> Check spam folder or the email address you entered. The status link is sent to <b>{{ site_email_hint }}</b>
+        </div>
+      </div>
+      {% else %}
+      <div class="msg-err" style="margin-bottom:16px">{{ msg }}</div>
+      {% endif %}
     {% endif %}
 
     <form method="post" style="display:flex;flex-direction:column;gap:4px">
