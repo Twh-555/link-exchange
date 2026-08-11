@@ -1910,3 +1910,23 @@ textarea.form-control {
 .gate-banner .btn{margin:0}
 .dark .gate-banner{background:rgba(47,124,246,.12);border-color:rgba(47,124,246,.3)}
 .tag-traffic{background:#e8f5e9;color:#0a7a3d}
+
+/* ============ Rich footer (twitter-hashtag-generator style) ============ */
+.twh-footer.mt-16{margin-top:64px}
+.footer-container{display:grid;grid-template-columns:1.4fr 1fr 1fr;gap:40px;padding:48px 0 32px}
+.footer-brand-col .twh-brand{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.footer-brand-col .logo-text .brand-name{font-weight:800;font-size:1.05rem}
+.footer-desc{color:var(--muted,#5a6b85);font-size:.88rem;line-height:1.7;max-width:340px;margin:0}
+.footer-links-col h4{font-size:.85rem;text-transform:uppercase;letter-spacing:.08em;color:var(--dark,#0f1b33);margin-bottom:14px}
+.footer-links-col ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px}
+.footer-links-col ul li a{color:var(--muted,#5a6b85);text-decoration:none;font-size:.9rem;display:inline-flex;align-items:center;gap:8px;transition:.15s}
+.footer-links-col ul li a:hover{color:var(--accent,#2f7cf6)}
+.footer-links-col ul li a i{width:16px;text-align:center;font-size:.85rem;color:var(--accent,#2f7cf6)}
+.dark .footer-links-col h4{color:#e8edf7}
+@media (max-width:860px){
+  .footer-container{grid-template-columns:1fr 1fr;gap:28px}
+  .footer-brand-col{grid-column:1/-1}
+}
+@media (max-width:640px){
+  .footer-container{grid-template-columns:1fr;gap:24px;padding:36px 0 24px}
+}
