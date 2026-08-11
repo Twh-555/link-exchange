@@ -29,7 +29,7 @@ except FileNotFoundError:
     pass
 
 import requests
-from flask import Flask, g, jsonify, redirect, render_template, request, url_for
+from flask import Flask, g, jsonify, redirect, render_template, request, session, url_for
 
 try:
     from niche_data import get_niche_data
@@ -137,6 +137,7 @@ CREATE TABLE IF NOT EXISTS sites (
     traffic TEXT DEFAULT '',
     status TEXT DEFAULT 'pending',   -- pending | active | rejected
     token TEXT DEFAULT '',
+    password TEXT DEFAULT '',
     created_at TEXT NOT NULL,
     approved_at TEXT
 );
@@ -156,12 +157,14 @@ def get_db():
         g.db = sqlite3.connect(DB_PATH)
         g.db.row_factory = sqlite3.Row
         g.db.executescript(SCHEMA)
-        # migration: ensure traffic + token columns exist (older DBs)
+        # migration: ensure traffic + token + password columns exist (older DBs)
         cols = [r[1] for r in g.db.execute("PRAGMA table_info(sites)").fetchall()]
         if "traffic" not in cols:
             g.db.execute("ALTER TABLE sites ADD COLUMN traffic TEXT DEFAULT ''")
         if "token" not in cols:
             g.db.execute("ALTER TABLE sites ADD COLUMN token TEXT DEFAULT ''")
+        if "password" not in cols:
+            g.db.execute("ALTER TABLE sites ADD COLUMN password TEXT DEFAULT ''")
         g.db.commit()
     return g.db
 
@@ -264,14 +267,15 @@ def submit():
                 else:
                     niche_str = ", ".join(niches)
                     token = secrets.token_urlsafe(16)
+                    password = secrets.token_urlsafe(6)  # e.g. "xY3kPq_RsT"
                     db.execute(
-                        "INSERT INTO sites (site_name, site_url, email, niche, description, dr, da, traffic, status, token, created_at)"
-                        " VALUES (?,?,?,?,?,?,?,?, 'pending', ?, ?)",
+                        "INSERT INTO sites (site_name, site_url, email, niche, description, dr, da, traffic, status, token, password, created_at)"
+                        " VALUES (?,?,?,?,?,?,?,?, 'pending', ?, ?, ?)",
                         (f.get("site_name", "").strip()[:60], site_url, email,
                          niche_str, f.get("description", "").strip()[:200],
                          min(dr, 100), min(da, 100),
                          f.get("traffic", "").strip()[:60],
-                         token, datetime.utcnow().isoformat()))
+                         token, password, datetime.utcnow().isoformat()))
                     db.commit()
                     msg = "✅ Site submitted! Our team will review it — once approved, your site appears in the directory for link exchanges."
                     ok = True
@@ -322,6 +326,21 @@ def submit():
         </td></tr>
       </table>
 
+      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="border:1px solid #e3e8f2;border-radius:12px;margin-bottom:20px">
+        <tr><td style="background:#f0f7ff;padding:12px 20px;font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:#1a3a8f;border-bottom:1px solid #e3e8f2;border-radius:12px 12px 0 0;font-family:Arial,sans-serif">🔑 Your Login Details</td></tr>
+        <tr><td style="padding:12px 20px 2px;color:#5a6b85;font-weight:600;font-size:13px;font-family:Arial,sans-serif">Username (email)</td></tr>
+        <tr><td style="padding:2px 20px 12px;color:#0f1b33;font-weight:700;font-size:14px;font-family:Arial,sans-serif">{email}</td></tr>
+        <tr style="background:#fafbfe"><td style="padding:12px 20px 2px;color:#5a6b85;font-weight:600;font-size:13px;font-family:Arial,sans-serif">Password</td></tr>
+        <tr style="background:#fafbfe"><td style="padding:2px 20px 14px;color:#0f1b33;font-weight:700;font-size:14px;font-family:Arial,sans-serif">{password}</td></tr>
+      </table>
+
+      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin-bottom:12px">
+        <tr><td align="center">
+          <a href="{SITE_URL}/link-exchange/login" style="display:inline-block;background:#0f1b33;color:#ffffff;text-decoration:none;padding:14px 32px;border-radius:50px;font-size:15px;font-weight:700;font-family:Arial,sans-serif">Login to Your Account →</a>
+        </td></tr>
+      </table>
+      <p style="font-size:12px;color:#8a97ad;text-align:center;margin:0 0 16px;font-family:Arial,sans-serif">Login with the email and password above to manage your listing</p>
+
       <p style="font-size:13px;color:#5a6b85;line-height:1.6;margin:0 0 16px;font-family:Arial,sans-serif">
         Once approved, your site appears in the directory and other site owners can send you link exchange requests directly by email.
       </p>
@@ -351,6 +370,41 @@ def status_page(token):
     if not site:
         return render_template("status.html", found=False, site=None, site_url=SITE_URL)
     return render_template("status.html", found=True, site=site, site_url=SITE_URL)
+
+
+@app.route("/login", methods=["GET", "POST"])
+def login():
+    db = get_db()
+    msg, ok = "", False
+    if request.method == "POST":
+        email_in = request.form.get("email", "").strip().lower()
+        pass_in = request.form.get("password", "").strip()
+        site = db.execute(
+            "SELECT * FROM sites WHERE email=? AND password=? ORDER BY id DESC LIMIT 1",
+            (email_in, pass_in)).fetchone()
+        if site:
+            session["user_email"] = site["email"]
+            session["user_site_id"] = site["id"]
+            return redirect(url_for("dashboard"))
+        msg = "❌ Invalid email or password."
+    return render_template("login.html", msg=msg, ok=ok, site_url=SITE_URL)
+
+
+@app.route("/dashboard")
+def dashboard():
+    if "user_email" not in session:
+        return redirect(url_for("login"))
+    db = get_db()
+    sites = db.execute(
+        "SELECT * FROM sites WHERE email=? ORDER BY id DESC",
+        (session["user_email"],)).fetchall()
+    return render_template("dashboard.html", sites=sites, site_url=SITE_URL)
+
+
+@app.route("/logout")
+def logout():
+    session.clear()
+    return redirect(url_for("login"))
 
 
 @app.route("/exchange/<int:site_id>", methods=["GET", "POST"])

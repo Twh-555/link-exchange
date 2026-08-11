@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+{% block title %}Login – Manage Your Link Exchange Listing | TWH{% endblock %}
+{% block canonical %}{{ site_url }}/link-exchange/login{% endblock %}
+{% block robots %}noindex, follow{% endblock %}
+{% block meta_desc %}Login to manage your link exchange listing on TWH. Check your submission status, view exchange requests, and update your site details.{% endblock %}
+
+{% block content %}
+<section class="hero-section text-center">
+  <div class="hero-badge"><i class="fa-solid fa-user-lock"></i> Member Login</div>
+  <h1 class="page-title"><span class="gradient-text">Login to Your Account</span></h1>
+  <p class="page-subtitle">Manage your link exchange listing — check status, update details.</p>
+</section>
+
+<div class="generator-grid" style="max-width:480px;margin:24px auto;grid-template-columns:1fr">
+  <div class="calc-card">
+    {% if msg %}
+    <div class="msg-err" style="margin-bottom:16px">{{ msg }}</div>
+    {% endif %}
+    <form method="post" style="display:flex;flex-direction:column;gap:14px">
+      <div class="form-group">
+        <label class="field-label">Email (your login username)</label>
+        <input class="form-control" type="email" name="email" required placeholder="you@email.com">
+      </div>
+      <div class="form-group">
+        <label class="field-label">Password</label>
+        <input class="form-control" type="password" name="password" required placeholder="Password from your welcome email">
+      </div>
+      <button class="btn btn-primary btn-block btn-lg" type="submit"><i class="fa-solid fa-right-to-bracket"></i> Login</button>
+      <p class="form-note" style="text-align:center;margin-top:6px">
+        <i class="fa-solid fa-circle-info"></i> Login details are sent to your email when you submit your site.
+        <a href="{{ url_for('submit') }}">Add your site</a> to get started.
+      </p>
+    </form>
+  </div>
+</div>
+{% endblock %}

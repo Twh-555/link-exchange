@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+{% block title %}My Listings – Link Exchange Dashboard | TWH{% endblock %}
+{% block canonical %}{{ site_url }}/link-exchange/dashboard{% endblock %}
+{% block robots %}noindex, follow{% endblock %}
+{% block meta_desc %}Your link exchange listings dashboard.{% endblock %}
+
+{% block content %}
+<section class="hero-section text-center">
+  <div class="hero-badge"><i class="fa-solid fa-gauge-high"></i> My Dashboard</div>
+  <h1 class="page-title"><span class="gradient-text">My Listings</span></h1>
+  <p class="page-subtitle">
+    Logged in as <b>{{ sites[0].email if sites else 'member' }}</b>
+    {% if sites|length > 1 %} — {{ sites|length }} listings{% endif %}
+  </p>
+  <div class="hero-actions" style="margin-top:16px;display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+    <a class="btn btn-primary" href="{{ url_for('submit') }}"><i class="fa-solid fa-plus"></i> Add Another Site</a>
+    <a class="btn btn-primary btn-outline" href="{{ url_for('logout') }}"><i class="fa-solid fa-right-from-bracket"></i> Logout</a>
+  </div>
+</section>
+
+<div class="directory-grid" style="margin-top:24px">
+  {% for s in sites %}
+  <div class="site-card">
+    <div class="site-card-top">
+      <h3><a href="{{ s.site_url }}" target="_blank" rel="nofollow">{{ s.site_name }}</a></h3>
+    </div>
+    <p class="desc">{{ s.description[:100] }}</p>
+    <div class="site-meta">
+      <span class="badge-tag tag-dr">DR {{ s.dr }}</span>
+      <span class="badge-tag tag-da">DA {{ s.da }}</span>
+      {% if s.traffic %}<span class="badge-tag tag-traffic"><i class="fa-solid fa-chart-line"></i> {{ s.traffic }}</span>{% endif %}
+      {% if s.status == 'active' %}
+      <span class="badge-tag" style="background:#e8f5e9;color:#0a7a3d">✅ Approved</span>
+      {% elif s.status == 'rejected' %}
+      <span class="badge-tag" style="background:#fdecea;color:#d32f2f">❌ Rejected</span>
+      {% else %}
+      <span class="badge-tag" style="background:#fff8e6;color:#b8860b">⏳ Pending</span>
+      {% endif %}
+    </div>
+    <div class="site-actions" style="margin-top:12px">
+      <a class="btn btn-primary btn-sm" href="{{ url_for('status_page', token=s.token) }}"><i class="fa-solid fa-eye"></i> View Status</a>
+      <a class="btn btn-primary btn-outline btn-sm" href="{{ site_url }}/link-exchange/"><i class="fa-solid fa-layer-group"></i> Directory</a>
+    </div>
+  </div>
+  {% else %}
+  <div class="empty-state" style="grid-column:1/-1">
+    <i class="fa-solid fa-inbox"></i>
+    <p>No listings yet — <a href="{{ url_for('submit') }}">add your site</a>!</p>
+  </div>
+  {% endfor %}
+</div>
+{% endblock %}
