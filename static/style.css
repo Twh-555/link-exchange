@@ -1892,7 +1892,6 @@ textarea.form-control {
 
 /* ============ Directory Blur Gate (add your site to unlock) ============ */
 .directory-wrap{position:relative}
-.directory-wrap.locked .directory-grid{filter:blur(6px);pointer-events:none;user-select:none}
 .unlock-overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;z-index:20;background:rgba(255,255,255,.55);border-radius:16px;padding:24px}
 .dark .unlock-overlay{background:rgba(15,20,35,.6)}
 .unlock-card{background:var(--card-bg,#fff);border:1px solid var(--border,#e3e8f2);border-radius:16px;padding:32px;text-align:center;max-width:420px;box-shadow:0 16px 48px rgba(15,27,51,.16)}
@@ -1901,7 +1900,6 @@ textarea.form-control {
 .unlock-card p{font-size:.9rem;color:var(--muted,#5a6b85);margin-bottom:18px;line-height:1.6}
 .unlock-card .btn{margin:4px}
 .locked-badge{display:inline-flex;align-items:center;gap:6px;background:#fff3cd;color:#8a6d00;border:1px solid #ffe4a1;border-radius:20px;padding:4px 14px;font-size:.78rem;font-weight:700;margin-bottom:14px}
-
 /* ============ Name-only blur gate (v2) ============ */
 .directory-wrap.locked .site-name-lock{filter:blur(6px);pointer-events:none;user-select:none;cursor:not-allowed}
 .directory-wrap.locked .site-card .site-actions a.btn-outline{pointer-events:none;opacity:.6}
