@@ -26,6 +26,10 @@
         <input class="form-control" type="password" name="password" required placeholder="Password from your welcome email">
       </div>
       <button class="btn btn-primary btn-block btn-lg" type="submit"><i class="fa-solid fa-right-to-bracket"></i> Login</button>
+      <div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-top:4px">
+        <a href="{{ url_for('forgot') }}" class="form-note" style="font-size:.82rem"><i class="fa-solid fa-key"></i> Forgot password?</a>
+        <a href="{{ url_for('resend_verification') }}" class="form-note" style="font-size:.82rem"><i class="fa-solid fa-envelope-circle-check"></i> Resend verification link</a>
+      </div>
       <p class="form-note" style="text-align:center;margin-top:6px">
         <i class="fa-solid fa-circle-info"></i> Login details are sent to your email when you submit your site.
         <a href="{{ url_for('submit') }}">Add your site</a> to get started.

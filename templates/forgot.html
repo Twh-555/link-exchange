@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+{% block title %}{% if mode == 'verify' %}Resend Verification{% else %}Forgot Password{% endif %} – TWH Link Exchange{% endblock %}
+{% block canonical %}{{ site_url }}/link-exchange/login{% endblock %}
+{% block robots %}noindex, follow{% endblock %}
+
+{% block content %}
+<section class="hero-section text-center">
+  <div class="hero-badge"><i class="fa-solid fa-key"></i> Account Help</div>
+  <h1 class="page-title"><span class="gradient-text">{% if mode == 'verify' %}Resend Verification Link{% else %}Forgot Password?{% endif %}</span></h1>
+  <p class="page-subtitle">
+    {% if mode == 'verify' %}Enter your email and we'll send a new verification link (valid 24 hours).{% else %}Enter your email and we'll send a new password.{% endif %}
+  </p>
+</section>
+
+<div class="generator-grid" style="max-width:480px;margin:24px auto;grid-template-columns:1fr">
+  <div class="calc-card">
+    {% if msg %}
+      {% if ok %}
+      <div style="background:#f0faf4;border:1px solid #bfe8cd;border-radius:10px;padding:14px 16px;margin-bottom:16px;font-size:.9rem;color:#0a7a3d">{{ msg }}</div>
+      {% else %}
+      <div class="msg-err" style="margin-bottom:16px">{{ msg }}</div>
+      {% endif %}
+    {% endif %}
+    <form method="post" style="display:flex;flex-direction:column;gap:14px">
+      <div class="form-group">
+        <label class="field-label">Your Email</label>
+        <input class="form-control" type="email" name="email" required placeholder="you@email.com">
+      </div>
+      <button class="btn btn-primary btn-block btn-lg" type="submit">
+        <i class="fa-solid fa-paper-plane"></i> {% if mode == 'verify' %}Send Verification Link{% else %}Send New Password{% endif %}
+      </button>
+      <p class="form-note" style="text-align:center;margin-top:6px">
+        <a href="{{ url_for('login') }}"><i class="fa-solid fa-right-to-bracket"></i> Back to Login</a>
+      </p>
+    </form>
+  </div>
+</div>
+{% endblock %}

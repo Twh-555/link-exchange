@@ -433,6 +433,143 @@ def verify(verify_token):
     return render_template("verify.html", ok=True, reason="done", site=site, site_url=SITE_URL)
 
 
+@app.route("/forgot", methods=["GET", "POST"])
+def forgot():
+    db = get_db()
+    msg, ok = "", False
+    if request.method == "POST":
+        email_in = request.form.get("email", "").strip().lower()
+        site = db.execute(
+            "SELECT * FROM sites WHERE email=? ORDER BY id DESC LIMIT 1",
+            (email_in,)).fetchone()
+        if site:
+            # generate new password
+            new_pass = secrets.token_urlsafe(6)
+            db.execute("UPDATE sites SET password=? WHERE email=?",
+                       (new_pass, email_in))
+            db.commit()
+            send_mail(
+                email_in,
+                "🔑 Your TWH Link Exchange password reset",
+                f"""<!DOCTYPE html>
+<html><body style="margin:0;padding:0;background:#f4f6fb;font-family:Arial,sans-serif">
+<center style="width:100%">
+<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#f4f6fb;padding:24px 0">
+<tr><td align="center">
+<table role="presentation" width="600" cellspacing="0" cellpadding="0" border="0" style="max-width:600px;width:100%">
+  <tr>
+    <td align="center" style="background:linear-gradient(135deg,#1a3a8f 0%,#2f7cf6 55%,#6c5ce7 100%);border-radius:16px 16px 0 0;padding:32px 24px">
+      <div style="font-size:40px;line-height:1">🔑</div>
+      <h1 style="color:#ffffff;margin:12px 0 6px;font-size:22px;font-weight:800;font-family:Arial,sans-serif">Password Reset</h1>
+      <p style="color:rgba(255,255,255,.9);margin:0;font-size:14px;font-family:Arial,sans-serif">TWH Link Exchange</p>
+    </td>
+  </tr>
+  <tr>
+    <td style="background:#ffffff;border-radius:0 0 16px 16px;padding:28px 24px">
+      <p style="font-size:14px;color:#3a4a63;line-height:1.7;margin:0 0 20px;font-family:Arial,sans-serif">
+        We received a request to reset your password. Here's your new login details:
+      </p>
+      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="border:1px solid #e3e8f2;border-radius:12px;margin-bottom:20px">
+        <tr><td style="background:#f0f7ff;padding:12px 20px;font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:#1a3a8f;border-bottom:1px solid #e3e8f2;border-radius:12px 12px 0 0;font-family:Arial,sans-serif">🔑 Your Login Details</td></tr>
+        <tr><td style="padding:12px 20px 2px;color:#5a6b85;font-weight:600;font-size:13px;font-family:Arial,sans-serif">Username (email)</td></tr>
+        <tr><td style="padding:2px 20px 12px;color:#0f1b33;font-weight:700;font-size:14px;font-family:Arial,sans-serif">{email_in}</td></tr>
+        <tr style="background:#fafbfe"><td style="padding:12px 20px 2px;color:#5a6b85;font-weight:600;font-size:13px;font-family:Arial,sans-serif">New Password</td></tr>
+        <tr style="background:#fafbfe"><td style="padding:2px 20px 14px;color:#0f1b33;font-weight:700;font-size:14px;font-family:Arial,sans-serif">{new_pass}</td></tr>
+      </table>
+      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin-bottom:12px">
+        <tr><td align="center">
+          <a href="{SITE_URL}/link-exchange/login" style="display:inline-block;background:linear-gradient(135deg,#2f7cf6,#6c5ce7);color:#ffffff;text-decoration:none;padding:14px 32px;border-radius:50px;font-size:15px;font-weight:700;font-family:Arial,sans-serif">Login Now →</a>
+        </td></tr>
+      </table>
+      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="border-top:1px solid #eef1f7">
+        <tr><td align="center" style="padding-top:16px">
+          <p style="font-size:12px;color:#8a97ad;margin:0;font-family:Arial,sans-serif">Sent via <b style="color:#2f7cf6">TWH Link Exchange Directory</b></p>
+        </td></tr>
+      </table>
+    </td>
+  </tr>
+</table>
+</td></tr>
+</table>
+</center>
+</body></html>""")
+            msg = "✅ New password sent to your email! Check your inbox."
+            ok = True
+        else:
+            msg = "❌ No account found with this email."
+    return render_template("forgot.html", msg=msg, ok=ok, site_url=SITE_URL)
+
+
+@app.route("/resend-verification", methods=["GET", "POST"])
+def resend_verification():
+    db = get_db()
+    msg, ok = "", False
+    if request.method == "POST":
+        email_in = request.form.get("email", "").strip().lower()
+        site = db.execute(
+            "SELECT * FROM sites WHERE email=? ORDER BY id DESC LIMIT 1",
+            (email_in,)).fetchone()
+        if site and site["verified"] == 0:
+            new_token = secrets.token_urlsafe(24)
+            new_expires = (datetime.utcnow() + timedelta(hours=24)).isoformat()
+            db.execute("UPDATE sites SET verify_token=?, verify_expires=? WHERE id=?",
+                       (new_token, new_expires, site["id"]))
+            db.commit()
+            verify_link = f"{SITE_URL}/link-exchange/verify/{new_token}"
+            send_mail(
+                email_in,
+                "✅ Verify your email – TWH Link Exchange",
+                f"""<!DOCTYPE html>
+<html><body style="margin:0;padding:0;background:#f4f6fb;font-family:Arial,sans-serif">
+<center style="width:100%">
+<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#f4f6fb;padding:24px 0">
+<tr><td align="center">
+<table role="presentation" width="600" cellspacing="0" cellpadding="0" border="0" style="max-width:600px;width:100%">
+  <tr>
+    <td align="center" style="background:linear-gradient(135deg,#1a3a8f 0%,#2f7cf6 55%,#6c5ce7 100%);border-radius:16px 16px 0 0;padding:32px 24px">
+      <div style="font-size:40px;line-height:1">📧</div>
+      <h1 style="color:#ffffff;margin:12px 0 6px;font-size:22px;font-weight:800;font-family:Arial,sans-serif">Verify Your Email</h1>
+      <p style="color:rgba(255,255,255,.9);margin:0;font-size:14px;font-family:Arial,sans-serif">TWH Link Exchange</p>
+    </td>
+  </tr>
+  <tr>
+    <td style="background:#ffffff;border-radius:0 0 16px 16px;padding:28px 24px">
+      <p style="font-size:14px;color:#3a4a63;line-height:1.7;margin:0 0 20px;font-family:Arial,sans-serif">
+        Here is your new verification link (valid for 24 hours):
+      </p>
+      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin-bottom:20px">
+        <tr><td align="center">
+          <a href="{verify_link}" style="display:inline-block;background:linear-gradient(135deg,#2f7cf6,#6c5ce7);color:#ffffff;text-decoration:none;padding:14px 36px;border-radius:50px;font-size:15px;font-weight:700;font-family:Arial,sans-serif">Verify my email</a>
+        </td></tr>
+      </table>
+      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#f5f8ff;border:1px solid #e3ebff;border-radius:12px;margin-bottom:20px">
+        <tr><td style="padding:16px 20px">
+          <div style="font-size:13px;color:#5a6b85;line-height:1.7;margin-bottom:8px;font-family:Arial,sans-serif">If the button doesn't work, copy this link:</div>
+          <div style="font-size:12px;color:#2f7cf6;word-break:break-all;font-family:monospace;line-height:1.6">{verify_link}</div>
+        </td></tr>
+      </table>
+      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="border-top:1px solid #eef1f7">
+        <tr><td align="center" style="padding-top:16px">
+          <p style="font-size:12px;color:#8a97ad;margin:0;font-family:Arial,sans-serif">Sent via <b style="color:#2f7cf6">TWH Link Exchange Directory</b></p>
+        </td></tr>
+      </table>
+    </td>
+  </tr>
+</table>
+</td></tr>
+</table>
+</center>
+</body></html>""")
+            msg = "✅ New verification link sent! Check your inbox."
+            ok = True
+        elif site and site["verified"] == 1:
+            msg = "ℹ️ Your email is already verified — you can log in."
+        else:
+            msg = "❌ No account found with this email."
+    return render_template("forgot.html", msg=msg, ok=ok, site_url=SITE_URL,
+                           mode="verify")
+
+
 @app.route("/login", methods=["GET", "POST"])
 def login():
     db = get_db()
@@ -456,6 +593,14 @@ def dashboard():
     if "user_email" not in session:
         return redirect(url_for("login"))
     db = get_db()
+    # flash message from change-password redirects
+    notice = request.args.get("msg", "")
+    msgs = {
+        "changed": "✅ Password changed successfully!",
+        "wrong": "❌ Current password is incorrect.",
+        "short": "❌ New password must be at least 6 characters.",
+    }
+    notice = msgs.get(notice, "")
     sites = db.execute(
         "SELECT * FROM sites WHERE email=? ORDER BY id DESC",
         (session["user_email"],)).fetchall()
@@ -477,7 +622,58 @@ def dashboard():
         rd["_site_url"] = r_site["site_url"] if r_site else "?"
         resolved.append(rd)
     return render_template("dashboard.html", sites=sites, requests=resolved,
-                           site_url=SITE_URL)
+                           notice=notice, site_url=SITE_URL)
+
+
+@app.route("/edit/<int:site_id>", methods=["GET", "POST"])
+def edit_site(site_id):
+    if "user_email" not in session:
+        return redirect(url_for("login"))
+    db = get_db()
+    site = db.execute("SELECT * FROM sites WHERE id=?", (site_id,)).fetchone()
+    if not site or site["email"] != session["user_email"]:
+        return "Not found", 404
+    msg, ok = "", False
+    if request.method == "POST":
+        f = request.form
+        try:
+            dr = int(f.get("dr", "").strip())
+            da = int(f.get("da", "").strip())
+        except ValueError:
+            dr = da = None
+        if dr is None or da is None or not (0 <= dr <= 100 and 0 <= da <= 100):
+            msg = "❌ DR and DA must be between 0 and 100."
+        else:
+            db.execute(
+                "UPDATE sites SET site_name=?, description=?, dr=?, da=?, traffic=? WHERE id=?",
+                (f.get("site_name", "").strip()[:60],
+                 f.get("description", "").strip()[:200],
+                 min(dr, 100), min(da, 100),
+                 f.get("traffic", "").strip()[:60], site_id))
+            db.commit()
+            msg = "✅ Listing updated!"
+            ok = True
+    return render_template("edit.html", s=site, msg=msg, ok=ok, site_url=SITE_URL)
+
+
+@app.route("/change-password", methods=["POST"])
+def change_password():
+    if "user_email" not in session:
+        return redirect(url_for("login"))
+    db = get_db()
+    old = request.form.get("old_password", "").strip()
+    new = request.form.get("new_password", "").strip()
+    site = db.execute(
+        "SELECT * FROM sites WHERE email=? AND password=? ORDER BY id DESC LIMIT 1",
+        (session["user_email"], old)).fetchone()
+    if not site:
+        return redirect(url_for("dashboard", msg="wrong"))
+    if len(new) < 6:
+        return redirect(url_for("dashboard", msg="short"))
+    db.execute("UPDATE sites SET password=? WHERE email=?",
+               (new, session["user_email"]))
+    db.commit()
+    return redirect(url_for("dashboard", msg="changed"))
 
 
 @app.route("/logout")
@@ -634,9 +830,59 @@ def admin():
 @admin_required
 def admin_approve(site_id):
     db = get_db()
+    site = db.execute("SELECT * FROM sites WHERE id=?", (site_id,)).fetchone()
     db.execute("UPDATE sites SET status='active', approved_at=? WHERE id=?",
                (datetime.utcnow().isoformat(), site_id))
     db.commit()
+    # notify owner: your site is LIVE!
+    if site and site["email"]:
+        live_url = f"{SITE_URL}/link-exchange/"
+        send_mail(
+            site["email"],
+            f"🎉 Your site {site['site_name']} is LIVE on TWH Link Exchange!",
+            f"""<!DOCTYPE html>
+<html><body style="margin:0;padding:0;background:#f4f6fb;font-family:Arial,sans-serif">
+<center style="width:100%">
+<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#f4f6fb;padding:24px 0">
+<tr><td align="center">
+<table role="presentation" width="600" cellspacing="0" cellpadding="0" border="0" style="max-width:600px;width:100%">
+  <tr>
+    <td align="center" style="background:linear-gradient(135deg,#0a7a3d 0%,#2f9e63 60%,#6c5ce7 100%);border-radius:16px 16px 0 0;padding:32px 24px">
+      <div style="font-size:40px;line-height:1">🎉</div>
+      <h1 style="color:#ffffff;margin:12px 0 6px;font-size:22px;font-weight:800;font-family:Arial,sans-serif">Your Site is LIVE!</h1>
+      <p style="color:rgba(255,255,255,.95);margin:0;font-size:14px;font-family:Arial,sans-serif">{site['site_name']} has been approved</p>
+    </td>
+  </tr>
+  <tr>
+    <td style="background:#ffffff;border-radius:0 0 16px 16px;padding:28px 24px">
+      <p style="font-size:15px;color:#0f1b33;line-height:1.6;margin:0 0 16px;font-family:Arial,sans-serif">Great news! 🎉</p>
+      <p style="font-size:14px;color:#3a4a63;line-height:1.7;margin:0 0 20px;font-family:Arial,sans-serif">
+        Your site <b>{site['site_name']}</b> ({site['site_url']}) is now <b>live in the TWH Link Exchange directory</b>.
+        Other site owners can now find your site and send you exchange requests directly.
+      </p>
+      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#f5f8ff;border:1px solid #e3ebff;border-radius:12px;margin-bottom:20px">
+        <tr><td style="padding:16px 20px">
+          <div style="font-size:13px;color:#5a6b85;line-height:1.7;margin-bottom:8px;font-family:Arial,sans-serif">Your listing is live at:</div>
+          <div style="font-size:13px;color:#2f7cf6;word-break:break-all;font-family:monospace;line-height:1.6"><a href="{live_url}" style="color:#2f7cf6;text-decoration:none">{live_url}</a></div>
+        </td></tr>
+      </table>
+      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin-bottom:12px">
+        <tr><td align="center">
+          <a href="{live_url}" style="display:inline-block;background:linear-gradient(135deg,#2f7cf6,#6c5ce7);color:#ffffff;text-decoration:none;padding:14px 32px;border-radius:50px;font-size:15px;font-weight:700;font-family:Arial,sans-serif">View the Directory →</a>
+        </td></tr>
+      </table>
+      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="border-top:1px solid #eef1f7">
+        <tr><td align="center" style="padding-top:16px">
+          <p style="font-size:12px;color:#8a97ad;margin:0;font-family:Arial,sans-serif">Sent via <b style="color:#2f7cf6">TWH Link Exchange Directory</b></p>
+        </td></tr>
+      </table>
+    </td>
+  </tr>
+</table>
+</td></tr>
+</table>
+</center>
+</body></html>""")
     return redirect(url_for("admin"))
 
 
