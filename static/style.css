@@ -1930,3 +1930,16 @@ textarea.form-control {
 }
 .tag-owner{background:#e8f5e9;color:#0a7a3d;border:1px solid #bfe8cd}
 .tag-exch{background:#eef4ff;color:#2f7cf6;border:1px solid #cfe0ff}
+
+/* ============ Mobile Footer Fixes ============ */
+@media (max-width: 640px) {
+  .twh-footer { text-align: left; }
+  .footer-container { padding: 32px 4px 20px; gap: 22px; }
+  .footer-brand-col .twh-brand { margin-bottom: 10px; }
+  .footer-desc { font-size: .85rem; line-height: 1.65; max-width: 100%; }
+  .footer-links-col h4 { font-size: .8rem; margin-bottom: 10px; }
+  .footer-links-col ul { gap: 8px; }
+  .footer-links-col ul li a { font-size: .88rem; }
+  .footer-bottom { padding: 14px 4px; font-size: 12px; }
+  .footer-bottom-flex { flex-direction: column; align-items: flex-start; gap: 4px; }
+}
