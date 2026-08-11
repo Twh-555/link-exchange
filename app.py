@@ -230,6 +230,7 @@ def index():
 def submit():
     db = get_db()
     msg, ok = "", False
+    email = ""
     if request.method == "POST":
         f = request.form
         site_url = normalize_url(f.get("site_url", ""))
