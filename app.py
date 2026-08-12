@@ -353,6 +353,9 @@ def submit():
         f = request.form
         site_url = normalize_url(f.get("site_url", ""))
         email = f.get("email", "").strip().lower()
+        # logged-in user: use their account email if form email empty
+        if not email and session.get("user_email"):
+            email = session["user_email"].lower()
         valid, err = validate_site(site_url, email)
         if not valid:
             msg = f"❌ {err}"
@@ -494,7 +497,11 @@ def submit():
     </body></html>""")
     return render_template("submit.html", msg=msg, ok=ok, niches=NICHES,
                             site_url=SITE_URL,
-                            site_email_hint=email if email else "")
+                            site_email_hint=email if email else "",
+                            user_email=session.get("user_email", ""),
+                            user_sites=db.execute(
+                                "SELECT * FROM sites WHERE email=? ORDER BY id DESC",
+                                (session.get("user_email", ""),)).fetchall() if session.get("user_email") else [])
 
 
 @app.route("/status/<token>")

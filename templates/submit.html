@@ -61,18 +61,58 @@
       <a class="btn btn-primary btn-outline btn-sm" href="{{ url_for('bulk_upload') }}"><i class="fa-solid fa-file-csv"></i> Have many sites? Bulk Upload via CSV</a>
     </div>
     <form method="post" style="display:flex;flex-direction:column;gap:4px">
+      <script>
+        // logged-in user: selecting an existing site auto-fills the form
+        document.addEventListener('DOMContentLoaded', function () {
+          var sel = document.getElementById('existingSiteSelect');
+          if (!sel) return;
+          sel.addEventListener('change', function () {
+            var opt = sel.options[sel.selectedIndex];
+            var nameIn = document.getElementById('siteNameInput');
+            var urlIn = document.getElementById('siteUrlInput');
+            if (opt && opt.value) {
+              if (nameIn) nameIn.value = opt.getAttribute('data-name') || '';
+              if (urlIn) { urlIn.value = opt.value; urlIn.readOnly = true; }
+            } else {
+              if (nameIn) nameIn.value = '';
+              if (urlIn) { urlIn.value = ''; urlIn.readOnly = false; }
+            }
+          });
+        });
+      </script>
+      {% if user_email %}
+      <div style="background:#f0faf4;border:1px solid #bfe8cd;border-radius:10px;padding:12px 16px;margin-bottom:14px;font-size:.85rem;color:#0a7a3d">
+        <i class="fa-solid fa-circle-check"></i> Logged in as <b>{{ user_email }}</b> — we'll use your account email. 
+        {% if user_sites %}<br>You already have sites: <b>{% for s in user_sites %}{{ s.site_name }}{% if not loop.last %}, {% endif %}{% endfor %}</b>{% endif %}
+      </div>
+      {% if user_sites %}
+      <div class="form-group">
+        <label class="field-label">Select Your Website (or add a new one below)</label>
+        <select class="form-control" id="existingSiteSelect">
+          <option value="">+ Add a new website...</option>
+          {% for s in user_sites %}
+          <option value="{{ s.site_url }}" data-name="{{ s.site_name }}">{{ s.site_name }} ({{ s.site_url }})</option>
+          {% endfor %}
+        </select>
+        <p class="form-note" style="margin-top:4px"><i class="fa-solid fa-circle-info"></i> Already have this site in the directory? Select it — details auto-fill, no need to retype.</p>
+      </div>
+      {% endif %}
+      <input type="hidden" name="email" value="{{ user_email }}">
+      {% endif %}
       <div class="form-group">
         <label class="field-label">Site Name</label>
-        <input class="form-control" name="site_name" required placeholder="My Awesome Blog">
+        <input class="form-control" name="site_name" id="siteNameInput" required placeholder="My Awesome Blog">
       </div>
       <div class="form-group">
         <label class="field-label">Site URL</label>
-        <input class="form-control" name="site_url" required placeholder="myblog.com">
+        <input class="form-control" name="site_url" id="siteUrlInput" required placeholder="myblog.com">
       </div>
+      {% if not user_email %}
       <div class="form-group">
         <label class="field-label">Email (for exchange requests)</label>
         <input class="form-control" type="email" name="email" required placeholder="you@email.com">
       </div>
+      {% endif %}
       <div class="form-group">
         <label class="field-label">Niche (select 1-5)</label>
         <p class="form-note" style="margin-top:2px"><i class="fa-solid fa-circle-info"></i> Choose at least 1 and at most 5 niches that match your website.</p>
