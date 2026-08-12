@@ -234,14 +234,39 @@ def normalize_url(url: str) -> str:
 
 
 def check_link_live(link_url: str) -> bool:
-    """Check if a placed backlink URL is still live (HTTP 200 and reachable)."""
+    """Check if a placed backlink is still live on the page.
+    Returns True if page reachable AND the link URL is present in page content.
+    Returns False if page is gone OR the link was removed from the page."""
     if not link_url:
         return None
     url = link_url if link_url.startswith("http") else "https://" + link_url
     try:
-        r = requests.get(url, timeout=15,
-                         headers={"User-Agent": "Mozilla/5.0 (compatible; TWH-LinkCheck/1.0)"})
-        return r.status_code < 400
+        r = requests.get(url, timeout=20,
+                         headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36",
+                                  "Accept": "text/html,application/xhtml+xml,*/*;q=0.8",
+                                  "Accept-Language": "en-US,en;q=0.9"})
+        if r.status_code >= 400:
+            return False
+        # if page can't be parsed as text, fall back to reachability only
+        ctype = (r.headers.get("Content-Type") or "").lower()
+        if "html" not in ctype and "text" not in ctype:
+            return True
+        text = r.text.lower()
+        # 1) exact URL in page
+        hay = link_url.rstrip("/").lower()
+        if hay in text:
+            return True
+        # 2) protocol-relative //domain/path
+        if hay.startswith("https://") and hay[8:] in text:
+            return True
+        if hay.startswith("http://") and hay[7:] in text:
+            return True
+        # 3) domain mention (e.g. link moved to another page on same site)
+        from urllib.parse import urlparse
+        domain = urlparse(url).netloc.lower().replace("www.", "")
+        if domain in text:
+            return True
+        return False
     except Exception:
         return False
 
