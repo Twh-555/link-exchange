@@ -440,14 +440,32 @@ def bulk_upload():
 def directory():
     """Clean directory page - just the sites list, no hero/SEO content."""
     db = get_db()
-    sites = db.execute(
-        "SELECT * FROM sites WHERE status='active' ORDER BY owner_verified DESC, dr DESC").fetchall()
+    niche = (request.args.get("niche") or "").strip()
+    if niche:
+        sites = db.execute(
+            "SELECT * FROM sites WHERE status='active' AND niche LIKE ? "
+            "ORDER BY owner_verified DESC, dr DESC LIMIT 50",
+            (f"%{niche}%",)).fetchall()
+        # niche me kuch nahi mila -> random 50 active sites
+        if not sites:
+            sites = db.execute(
+                "SELECT * FROM sites WHERE status='active' "
+                "ORDER BY RANDOM() LIMIT 50").fetchall()
+            niche_fallback = True
+        else:
+            niche_fallback = False
+    else:
+        sites = db.execute(
+            "SELECT * FROM sites WHERE status='active' "
+            "ORDER BY owner_verified DESC, dr DESC LIMIT 50").fetchall()
+        niche_fallback = False
     exch_counts = {}
     for row in db.execute(
             "SELECT site_url, COUNT(*) c FROM sites WHERE status IN ('active','pending') GROUP BY site_url").fetchall():
         exch_counts[row["site_url"]] = row["c"]
     return render_template("directory.html", sites=sites, niches=NICHES,
-                           exch_counts=exch_counts, site_url=SITE_URL)
+                           exch_counts=exch_counts, niche=niche,
+                           niche_fallback=niche_fallback, site_url=SITE_URL)
 
 
 @app.route("/submit", methods=["GET", "POST"])

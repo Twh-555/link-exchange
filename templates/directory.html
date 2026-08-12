@@ -16,10 +16,22 @@
 <!-- Filters -->
 <div class="filter-bar">
   <input class="form-control" id="q" placeholder="Search sites by name or keyword...">
-  <select class="form-control" id="niche" style="max-width:240px">
-    {% for n in niches %}<option value="{{ n }}">{{ n }}</option>{% endfor %}
-  </select>
+  <form method="get" action="{{ url_for('directory') }}" style="display:flex;gap:8px;margin:0">
+    <select class="form-control" id="niche" name="niche" style="max-width:240px" onchange="this.form.submit()">
+      <option value="">All Niches</option>
+      {% for n in niches %}<option value="{{ n }}" {% if niche == n %}selected{% endif %}>{{ n }}</option>{% endfor %}
+    </select>
+  </form>
 </div>
+{% if niche %}
+<div style="max-width:1200px;margin:12px auto 0;font-size:.85rem;color:var(--muted,#5a6b85)">
+  {% if niche_fallback %}
+  <i class="fa-solid fa-circle-info"></i> No sites found in <b>{{ niche }}</b> niche — showing 50 random sites instead.
+  {% else %}
+  <i class="fa-solid fa-circle-info"></i> Showing up to 50 sites in <b>{{ niche }}</b> niche.
+  {% endif %}
+</div>
+{% endif %}
 
 <div class="directory-wrap {% if not user_email %}locked{% endif %}" id="directoryWrap">
   {% if not user_email %}
@@ -69,7 +81,7 @@
 {% block scripts %}
 <script>
   // ===== Search filter + no-results state =====
-  const q=document.getElementById('q'), n=document.getElementById('niche');
+  const q=document.getElementById('q');
   const grid = document.getElementById('grid');
   let noResults = document.getElementById('noResultsState');
   if (!noResults) {
@@ -87,17 +99,14 @@
   }
   function filter(){
     const query=q.value.toLowerCase();
-    const niche=n.value;
     let visible = 0;
     document.querySelectorAll('#grid .site-card').forEach(c=>{
       const okQ=c.dataset.name.includes(query)||!query;
-      const niches=(c.dataset.niche||'').toLowerCase().split(', ');
-      const okN=niche==='All'||niches.includes(niche.toLowerCase());
-      const show = okQ && okN;
+      const show = okQ;
       c.style.display = show ? '' : 'none';
       if (show) visible++;
     });
-    const searching = query !== '' || niche !== 'All';
+    const searching = query !== '';
     const lm = document.getElementById('loadMoreWrap');
     if (searching) { if (lm) lm.style.display = 'none'; }
     else {
@@ -114,7 +123,7 @@
       noResults.style.display = 'block';
     } else noResults.style.display = 'none';
   }
-  q.addEventListener('input',filter); n.addEventListener('change',filter);
+  q.addEventListener('input',filter);
 
   // ===== Show 9 + Load More =====
   (function(){
