@@ -1388,7 +1388,7 @@ def my_exchange_check_links(exchange_id):
     warned = False
     if partner_link_ok is False:
         partner = db.execute(
-            "SELECT site_name, site_url, email, notify FROM sites WHERE id=?",
+            "SELECT site_name, site_url, email, notify, owner_verified FROM sites WHERE id=?",
             (ex["to_site_id"],)).fetchone()
         my_site = db.execute(
             "SELECT site_name, site_url FROM sites WHERE id=?",
@@ -1396,7 +1396,7 @@ def my_exchange_check_links(exchange_id):
         db.execute("UPDATE exchanges SET status='warning', last_checked=? WHERE id=?",
                    (now, exchange_id))
         db.commit()
-        if partner and partner["email"] and partner["notify"]:
+        if partner and partner["email"] and partner["notify"] and partner["owner_verified"]:
             send_mail(
                 partner["email"],
                 f"⚠️ Link Removal Warning – {my_site['site_name'] if my_site else 'Partner'}",
@@ -1484,15 +1484,15 @@ def my_exchange_report_removed(exchange_id):
     if not owns:
         return "Not authorized", 403
     partner = db.execute(
-        "SELECT site_name, site_url, email, notify FROM sites WHERE id=?",
+        "SELECT site_name, site_url, email, notify, owner_verified FROM sites WHERE id=?",
         (ex["to_site_id"],)).fetchone()
     my_site = db.execute(
         "SELECT site_name, site_url FROM sites WHERE id=?",
         (ex["from_site_id"],)).fetchone()
     db.execute("UPDATE exchanges SET status='warning' WHERE id=?", (exchange_id,))
     db.commit()
-    # warning email to partner (skip legacy/imported sites)
-    if partner and partner["email"] and partner["notify"]:
+    # warning email to partner (only verified owners with notifications on)
+    if partner and partner["email"] and partner["notify"] and partner["owner_verified"]:
         send_mail(
             partner["email"],
             f"⚠️ Link Removal Warning – {my_site['site_name'] if my_site else 'Partner'}",
