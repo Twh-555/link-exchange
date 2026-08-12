@@ -70,13 +70,13 @@ def inject_user():
             (user_email,)).fetchall()
         if user_sites:
             user_name = user_sites[0]["site_name"]
-        # count incoming exchange requests (new/pending) for user's sites
+        # count UNREAD incoming exchange requests for user's sites
         ids = [s["id"] for s in db.execute(
             "SELECT id FROM sites WHERE email=?", (user_email,)).fetchall()]
         if ids:
             placeholders = ",".join("?" for _ in ids)
             msg_count = db.execute(
-                f"SELECT COUNT(*) FROM exchanges WHERE to_site_id IN ({placeholders}) AND status != 'done'",
+                f"SELECT COUNT(*) FROM exchanges WHERE to_site_id IN ({placeholders}) AND is_read=0",
                 ids).fetchone()[0]
     return dict(user_email=user_email, user_name=user_name,
                 user_sites_list=user_sites, msg_count=msg_count)
@@ -182,7 +182,8 @@ CREATE TABLE IF NOT EXISTS exchanges (
     partner_link TEXT DEFAULT '',    -- link placed BY partner ON user's site (target URL)
     last_checked TEXT DEFAULT '',
     my_link_page TEXT DEFAULT '',    -- page ON partner's site where my link is placed
-    partner_link_page TEXT DEFAULT '' -- page ON user's site where partner's link is placed
+    partner_link_page TEXT DEFAULT '', -- page ON user's site where partner's link is placed
+    is_read INTEGER DEFAULT 0        -- 1 = user has opened the request
 );
 """
 
@@ -217,6 +218,8 @@ def get_db():
         if "my_link_page" not in ecols:
             g.db.execute("ALTER TABLE exchanges ADD COLUMN my_link_page TEXT DEFAULT ''")
             g.db.execute("ALTER TABLE exchanges ADD COLUMN partner_link_page TEXT DEFAULT ''")
+        if "is_read" not in ecols:
+            g.db.execute("ALTER TABLE exchanges ADD COLUMN is_read INTEGER DEFAULT 0")
         g.db.commit()
     return g.db
 
@@ -939,6 +942,12 @@ def messages():
         "SELECT * FROM sites WHERE email=? ORDER BY id DESC",
         (session["user_email"],)).fetchall()
     site_ids = [s["id"] for s in sites]
+    # mark all incoming requests as READ (badge clears)
+    if site_ids:
+        placeholders = ",".join("?" for _ in site_ids)
+        db.execute(
+            f"UPDATE exchanges SET is_read=1 WHERE to_site_id IN ({placeholders})", site_ids)
+        db.commit()
     requests = []
     if site_ids:
         placeholders = ",".join("?" for _ in site_ids)
