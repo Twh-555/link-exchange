@@ -33,13 +33,14 @@
     {% endif %}
 
     <form method="post" style="display:flex;flex-direction:column;gap:4px">
+      {% if user_email %}
+      <input type="hidden" name="your_name" value="">
+      <input type="hidden" name="your_email" value="{{ user_email }}">
+      {% else %}
       <div class="form-group">
         <label class="field-label">Your Name</label>
         <input class="form-control" name="your_name" required>
       </div>
-      {% if user_email %}
-      <input type="hidden" name="your_email" value="{{ user_email }}">
-      {% else %}
       <div class="form-group">
         <label class="field-label">Your Email</label>
         <input class="form-control" type="email" name="your_email" required>

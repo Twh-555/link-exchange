@@ -806,6 +806,8 @@ def exchange(site_id):
         for us in user_sites:
             if us["site_url"] == your_site:
                 from_site_id = us["id"]
+                if not your_name:
+                    your_name = us["site_name"]
                 break
         db.execute(
             "INSERT INTO exchanges (from_site_id, to_site_id, message, status, created_at)"
