@@ -909,6 +909,68 @@ def messages():
                            site_url=SITE_URL)
 
 
+@app.route("/tracking", methods=["GET", "POST"])
+def tracking():
+    """Exchange Tracking page - user's exchanges + add new exchange manually."""
+    if "user_email" not in session:
+        return redirect(url_for("login"))
+    db = get_db()
+    msg, ok = "", False
+    sites = db.execute(
+        "SELECT * FROM sites WHERE email=? ORDER BY id DESC",
+        (session["user_email"],)).fetchall()
+    site_ids = [s["id"] for s in sites]
+
+    # ADD EXCHANGE (manual record)
+    if request.method == "POST":
+        f = request.form
+        my_site_id = int(f.get("my_site_id") or 0)
+        partner_site_id = int(f.get("partner_site_id") or 0)
+        note = f.get("note", "").strip()[:300]
+        # verify ownership of my site
+        owns = db.execute(
+            "SELECT 1 FROM sites WHERE id=? AND email=?",
+            (my_site_id, session["user_email"])).fetchone()
+        partner = db.execute("SELECT site_name, site_url FROM sites WHERE id=?", (partner_site_id,)).fetchone()
+        if not owns:
+            msg, ok = "❌ Please select one of YOUR sites.", False
+        elif not partner:
+            msg, ok = "❌ Please select a partner site.", False
+        else:
+            my_site = db.execute("SELECT site_name, site_url, email FROM sites WHERE id=?", (my_site_id,)).fetchone()
+            db.execute(
+                "INSERT INTO exchanges (from_site_id, to_site_id, message, status, created_at)"
+                " VALUES (?,?,?, 'pending', ?)",
+                (my_site_id, partner_site_id,
+                 f"{my_site['site_name']} | {my_site['email']} | {my_site['site_url']}: "
+                 f"[Exchange recorded manually] {note}",
+                 datetime.utcnow().isoformat()))
+            db.commit()
+            msg, ok = f"✅ Exchange with {partner['site_name']} recorded! Now place both links and mark it done.", True
+
+    # exchanges list
+    outgoing = []
+    if site_ids:
+        placeholders = ",".join("?" for _ in site_ids)
+        for ex in db.execute(
+                f"SELECT * FROM exchanges WHERE from_site_id IN ({placeholders}) ORDER BY id DESC",
+                site_ids).fetchall():
+            ed = dict(ex)
+            partner = db.execute(
+                "SELECT site_name, site_url, email, dr FROM sites WHERE id=?",
+                (ex["to_site_id"],)).fetchone()
+            ed["_partner_name"] = partner["site_name"] if partner else "?"
+            ed["_partner_url"] = partner["site_url"] if partner else "?"
+            ed["_partner_email"] = partner["email"] if partner else ""
+            ed["_partner_dr"] = partner["dr"] if partner else 0
+            outgoing.append(ed)
+    # all active directory sites for partner picker
+    partners = db.execute(
+        "SELECT id, site_name, site_url, dr, niche FROM sites WHERE status='active' ORDER BY dr DESC").fetchall()
+    return render_template("tracking.html", sites=sites, outgoing=outgoing,
+                           partners=partners, msg=msg, ok=ok, site_url=SITE_URL)
+
+
 @app.route("/logout")
 def logout():
     session.clear()
