@@ -70,6 +70,19 @@ def restrict_host():
         return app.response_class("404 Not Found", status=404)
 
 
+@app.after_request
+def security_headers(resp):
+    """Security headers: clickjacking, MIME sniffing, referrer, cache for private pages."""
+    resp.headers["X-Frame-Options"] = "SAMEORIGIN"
+    resp.headers["X-Content-Type-Options"] = "nosniff"
+    resp.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+    resp.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()"
+    # no-store on private pages (login/dashboard/messages/tracking/profile/admin)
+    if any(p in request.path for p in ("/login", "/dashboard", "/messages", "/tracking", "/profile", "/admin", "/status/", "/verify/")):
+        resp.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
+    return resp
+
+
 @app.context_processor
 def inject_user():
     """Make login state + user's sites available to ALL templates."""
