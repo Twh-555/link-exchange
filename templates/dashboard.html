@@ -27,32 +27,37 @@
   <div class="content-article">
     <h2><i class="fa-solid fa-inbox"></i> Incoming Exchange Requests ({{ requests|length }})</h2>
     {% if requests %}
-    <div class="admin-table-wrap" style="margin-top:12px">
-      <table style="width:100%;border-collapse:collapse;font-size:.85rem">
-        <thead>
-          <tr style="background:#f8faff;text-align:left">
-            <th style="padding:10px 14px">For Site</th>
-            <th style="padding:10px 14px">Request Details</th>
-            <th style="padding:10px 14px">Status</th>
-            <th style="padding:10px 14px">Date</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for r in requests %}
-          <tr style="border-top:1px solid var(--border,#e3e8f2)">
-            <td style="padding:10px 14px"><b>{{ r._site_name }}</b></td>
-            <td style="padding:10px 14px;color:#3a4a63;max-width:300px">{{ r.message[:100] }}</td>
-            <td style="padding:10px 14px">
-              {% if r.status == 'done' %}<span style="color:#0a7a3d;font-weight:600">✅ Done</span>
-              {% else %}<span style="color:#b8860b;font-weight:600">⏳ New</span>{% endif %}
-            </td>
-            <td style="padding:10px 14px;color:#8a97ad">{{ r.created_at[:10] }}</td>
-          </tr>
-          {% else %}
-          <tr><td colspan="4" style="padding:16px;text-align:center;color:#8a97ad">No exchange requests yet — <a href="{{ url_for('index') }}">find partners in the directory</a>.</td></tr>
-          {% endfor %}
-        </tbody>
-      </table>
+    <div style="display:flex;flex-direction:column;gap:14px;margin-top:14px">
+      {% for r in requests %}
+      <div style="background:#fff;border:1px solid var(--border,#e3e8f2);border-radius:12px;padding:16px 18px">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
+          <div style="display:flex;align-items:center;gap:10px">
+            <div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#2f7cf6,#6c5ce7);color:#fff;font-weight:800;display:flex;align-items:center;justify-content:center;font-size:.9rem">{{ (r._from_name or r._from_site or '?')[0]|upper }}</div>
+            <div>
+              <div style="font-weight:700;font-size:.88rem;color:var(--dark,#0f1b33)">{{ r._from_name or 'Anonymous' }}</div>
+              <div style="font-size:.75rem;color:var(--muted,#8a97ad)">
+                {% if r._from_site %}<a href="https://{{ r._from_site }}" target="_blank" rel="nofollow" style="color:var(--accent,#2f7cf6)">{{ r._from_site }}</a>{% endif %}
+                {% if r._from_email %} · {{ r._from_email }}{% endif %}
+              </div>
+            </div>
+          </div>
+          <span style="font-size:.7rem;font-weight:700;padding:4px 10px;border-radius:50px;
+            {% if r.status == 'done' %}background:#e8f5e9;color:#0a7a3d{% else %}background:#fff8e6;color:#b8860b{% endif %}">
+            {% if r.status == 'done' %}✅ Done{% else %}⏳ New{% endif %}
+          </span>
+        </div>
+        <div style="font-size:.85rem;color:#3a4a63;line-height:1.7;margin:12px 0 0;white-space:pre-line">{{ r._body or r.message }}</div>
+        <div style="display:flex;gap:10px;align-items:center;justify-content:space-between;margin-top:12px;flex-wrap:wrap">
+          <span style="font-size:.72rem;color:var(--muted,#aab4c6)">Requested for <b>{{ r._site_name }}</b> · {{ r.created_at[:10] }}</span>
+          <div style="display:flex;gap:8px">
+            {% if r._from_email %}
+            <a class="btn btn-primary btn-sm" href="mailto:{{ r._from_email }}?subject=Re:%20Link%20Exchange%20with%20{{ r._site_url or r._site_name }}"><i class="fa-solid fa-reply"></i> Reply</a>
+            {% endif %}
+            <a class="btn btn-primary btn-outline btn-sm" href="{{ url_for('site_page', site_id=r._site_id) if r.get('_site_id') else url_for('index') }}"><i class="fa-solid fa-eye"></i> View Site</a>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
     </div>
     {% else %}
     <p style="color:var(--muted,#5a6b85)">

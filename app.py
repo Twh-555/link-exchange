@@ -739,6 +739,17 @@ def dashboard():
         r_site = db.execute("SELECT site_name, site_url FROM sites WHERE id=?", (r["to_site_id"],)).fetchone()
         rd["_site_name"] = r_site["site_name"] if r_site else "?"
         rd["_site_url"] = r_site["site_url"] if r_site else "?"
+        rd["_site_id"] = r["to_site_id"]
+        # parse message: "Name | email | site: message"
+        m = re.match(r"^([^|]*)\|([^|]*)\|([^:]*):\s*(.*)$", r["message"] or "", re.S)
+        if m:
+            rd["_from_name"] = m.group(1).strip()
+            rd["_from_email"] = m.group(2).strip()
+            rd["_from_site"] = m.group(3).strip()
+            rd["_body"] = m.group(4).strip()
+        else:
+            rd["_from_name"] = rd["_from_email"] = rd["_from_site"] = ""
+            rd["_body"] = r["message"] or ""
         resolved.append(rd)
     return render_template("dashboard.html", sites=sites, requests=resolved,
                            notice=notice, site_url=SITE_URL)
