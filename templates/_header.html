@@ -85,27 +85,27 @@
         <div class="nav-actions">
           {% if user_email %}
           <div class="user-menu" id="userMenu">
-            <button class="user-menu-btn" type="button" aria-expanded="false">
+            <a class="user-menu-btn" href="{{ url_for('profile') }}" aria-expanded="false">
               <span class="user-avatar">{{ (user_name or user_email)[0]|upper }}</span>
               <span class="user-menu-label">{{ user_name or user_email.split('@')[0] }}</span>
-              <i class="fa-solid fa-chevron-down user-caret"></i>
-            </button>
+              <i class="fa-solid fa-chevron-down user-caret" onclick="event.preventDefault();event.stopPropagation();document.getElementById('userMenu').classList.toggle('open')"></i>
+            </a>
             <div class="user-dropdown" id="userDropdown">
-              <div class="user-dropdown-head">
+              <a class="user-dropdown-head" href="{{ url_for('profile') }}">
                 <div class="user-avatar-lg">{{ (user_name or user_email)[0]|upper }}</div>
                 <div>
                   <div class="user-dd-name">{{ user_name or 'Member' }}</div>
                   <div class="user-dd-email">{{ user_email }}</div>
                 </div>
-              </div>
+              </a>
               <div class="user-dd-label">My Sites</div>
               {% for s in user_sites_list %}
               <a class="user-dd-item" href="{{ url_for('dashboard') }}"><i class="fa-solid fa-globe"></i> {{ s.site_name }}</a>
               {% endfor %}
               <div class="user-dd-sep"></div>
+              <a class="user-dd-item" href="{{ url_for('profile') }}"><i class="fa-solid fa-user"></i> My Profile</a>
               <a class="user-dd-item" href="{{ url_for('dashboard') }}"><i class="fa-solid fa-gauge-high"></i> My Dashboard</a>
               <a class="user-dd-item" href="{{ url_for('submit') }}"><i class="fa-solid fa-plus"></i> List Your Website</a>
-              <a class="user-dd-item" href="{{ url_for('dashboard') }}#change-password"><i class="fa-solid fa-lock"></i> Change Password</a>
               <div class="user-dd-sep"></div>
               <a class="user-dd-item user-dd-logout" href="{{ url_for('logout') }}"><i class="fa-solid fa-right-from-bracket"></i> Logout</a>
             </div>

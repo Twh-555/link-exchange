@@ -1,0 +1,73 @@
+{% extends 'base.html' %}
+{% block title %}My Profile – TWH Link Exchange{% endblock %}
+{% block canonical %}{{ site_url }}/link-exchange/profile{% endblock %}
+{% block robots %}noindex, follow{% endblock %}
+
+{% block content %}
+<section class="hero-section text-center">
+  <div class="hero-badge"><i class="fa-solid fa-user"></i> My Profile</div>
+  <h1 class="page-title"><span class="gradient-text">Account Profile</span></h1>
+</section>
+
+<div class="generator-grid" style="max-width:640px;margin:20px auto;grid-template-columns:1fr">
+  {% if notice %}
+  <div style="background:#f0faf4;border:1px solid #bfe8cd;border-radius:10px;padding:12px 16px;margin-bottom:16px;font-size:.9rem;color:#0a7a3d">{{ notice }}</div>
+  {% endif %}
+
+  <!-- Account info card -->
+  <div class="calc-card" style="margin-bottom:20px">
+    <div style="display:flex;align-items:center;gap:16px;padding:4px 0 16px;border-bottom:1px solid var(--border,#e3e8f2)">
+      <div style="width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,#2f7cf6,#6c5ce7);color:#fff;font-size:1.5rem;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0">{{ user_email[0]|upper }}</div>
+      <div>
+        <div style="font-weight:700;color:var(--dark,#0f1b33);font-size:1rem">{{ user_email.split('@')[0] }}</div>
+        <div style="color:var(--muted,#8a97ad);font-size:.85rem">{{ user_email }}</div>
+      </div>
+    </div>
+
+    <h2 style="font-size:1rem;margin:18px 0 10px"><i class="fa-solid fa-globe"></i> My Sites ({{ sites|length }})</h2>
+    {% if sites %}
+    <div style="display:flex;flex-direction:column;gap:8px">
+      {% for s in sites %}
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;background:#f8faff;border:1px solid var(--border,#e3e8f2);border-radius:10px;padding:10px 14px">
+        <div>
+          <div style="font-weight:600;font-size:.88rem;color:var(--dark,#0f1b33)">{{ s.site_name }}</div>
+          <div style="font-size:.75rem;color:var(--muted,#8a97ad)">{{ s.site_url }} · DR {{ s.dr or '—' }}</div>
+        </div>
+        <span style="font-size:.7rem;font-weight:700;padding:4px 10px;border-radius:50px;
+          {% if s.status == 'active' %}background:#e8f5e9;color:#0a7a3d
+          {% elif s.status == 'rejected' %}background:#fdecea;color:#d32f2f
+          {% else %}background:#fff8e6;color:#b8860b{% endif %}">
+          {{ s.status|upper }}</span>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <p style="color:var(--muted,#5a6b85);font-size:.85rem">No sites yet — <a href="{{ url_for('submit') }}">list your website</a>!</p>
+    {% endif %}
+  </div>
+
+  <!-- Change password card -->
+  <div class="calc-card">
+    <h2 style="font-size:1rem;margin-bottom:14px"><i class="fa-solid fa-lock"></i> Change Password</h2>
+    <form method="post" action="{{ url_for('change_password') }}" style="display:flex;flex-direction:column;gap:12px">
+      <div class="form-group">
+        <label class="field-label">Current Password</label>
+        <input class="form-control" type="password" name="old_password" required placeholder="Current password">
+      </div>
+      <div class="form-group">
+        <label class="field-label">New Password (min 6 chars)</label>
+        <input class="form-control" type="password" name="new_password" required minlength="6" placeholder="New password">
+      </div>
+      <div class="form-group">
+        <label class="field-label">Confirm New Password</label>
+        <input class="form-control" type="password" name="confirm_password" required minlength="6" placeholder="Re-enter new password">
+      </div>
+      <button class="btn btn-primary" type="submit" style="align-self:flex-start"><i class="fa-solid fa-key"></i> Update Password</button>
+    </form>
+  </div>
+
+  <div style="text-align:center;margin-top:18px">
+    <a class="btn btn-primary btn-outline btn-sm" href="{{ url_for('dashboard') }}"><i class="fa-solid fa-arrow-left"></i> Back to Dashboard</a>
+  </div>
+</div>
+{% endblock %}

@@ -782,17 +782,42 @@ def change_password():
     db = get_db()
     old = request.form.get("old_password", "").strip()
     new = request.form.get("new_password", "").strip()
+    confirm = request.form.get("confirm_password", "").strip()
     site = db.execute(
         "SELECT * FROM sites WHERE email=? AND password=? ORDER BY id DESC LIMIT 1",
         (session["user_email"], old)).fetchone()
     if not site:
-        return redirect(url_for("dashboard", msg="wrong"))
+        return redirect(url_for("profile", msg="wrong"))
     if len(new) < 6:
-        return redirect(url_for("dashboard", msg="short"))
+        return redirect(url_for("profile", msg="short"))
+    if new != confirm:
+        return redirect(url_for("profile", msg="mismatch"))
     db.execute("UPDATE sites SET password=? WHERE email=?",
                (new, session["user_email"]))
     db.commit()
-    return redirect(url_for("dashboard", msg="changed"))
+    return redirect(url_for("profile", msg="changed"))
+
+
+@app.route("/profile")
+def profile():
+    """User profile page — account info + change password."""
+    if "user_email" not in session:
+        return redirect(url_for("login"))
+    db = get_db()
+    notice = request.args.get("msg", "")
+    msgs = {
+        "changed": "✅ Password changed successfully!",
+        "wrong": "❌ Current password is incorrect.",
+        "short": "❌ New password must be at least 6 characters.",
+        "mismatch": "❌ New passwords do not match.",
+    }
+    notice = msgs.get(notice, "")
+    sites = db.execute(
+        "SELECT * FROM sites WHERE email=? ORDER BY id DESC",
+        (session["user_email"],)).fetchall()
+    return render_template("profile.html", sites=sites, notice=notice,
+                           site_url=SITE_URL,
+                           user_email=session["user_email"])
 
 
 @app.route("/logout")

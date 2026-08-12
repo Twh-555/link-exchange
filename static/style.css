@@ -2024,3 +2024,9 @@ textarea.form-control {
   .user-menu-label { display: none; }
   .user-menu-btn { padding: 5px; }
 }
+
+/* profile link styles */
+.user-menu-btn { text-decoration: none; }
+.user-dropdown-head { text-decoration: none; }
+.user-dropdown-head:hover { background: #f0f5ff; border-radius: 10px; }
+.user-caret { cursor: pointer; padding: 4px 2px 4px 8px; }
