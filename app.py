@@ -55,6 +55,20 @@ CONTACT_EMAIL = os.environ.get("CONTACT_EMAIL", "hello@thewebhospitality.com")
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "change-me-in-production")
 
+# ---------- Host restriction: only serve on thewebhospitality.com ----------
+ALLOWED_HOSTS = {
+    "thewebhospitality.com", "www.thewebhospitality.com",
+    "127.0.0.1", "localhost", "127.0.0.1:5051", "localhost:5051",
+}
+
+
+@app.before_request
+def restrict_host():
+    """Block access from any host other than thewebhospitality.com."""
+    host = (request.host or "").lower().strip()
+    if host not in ALLOWED_HOSTS:
+        return app.response_class("404 Not Found", status=404)
+
 
 @app.context_processor
 def inject_user():
