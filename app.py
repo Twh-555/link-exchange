@@ -741,6 +741,8 @@ def dashboard():
         "changed": "✅ Password changed successfully!",
         "wrong": "❌ Current password is incorrect.",
         "short": "❌ New password must be at least 6 characters.",
+        "exchangedone": "✅ Exchange marked as done! Both links placed.",
+        "warningsent": "⚠️ Warning email sent to your partner. If the link is live, no action needed.",
     }
     notice = msgs.get(notice, "")
     sites = db.execute(
@@ -774,8 +776,24 @@ def dashboard():
             rd["_from_name"] = rd["_from_email"] = rd["_from_site"] = ""
             rd["_body"] = r["message"] or ""
         resolved.append(rd)
+    # OUTGOING exchanges (user's sent requests) + partner site info
+    outgoing = []
+    if site_ids:
+        placeholders = ",".join("?" for _ in site_ids)
+        for ex in db.execute(
+                f"SELECT * FROM exchanges WHERE from_site_id IN ({placeholders}) ORDER BY id DESC",
+                site_ids).fetchall():
+            ed = dict(ex)
+            partner = db.execute(
+                "SELECT site_name, site_url, email, dr FROM sites WHERE id=?",
+                (ex["to_site_id"],)).fetchone()
+            ed["_partner_name"] = partner["site_name"] if partner else "?"
+            ed["_partner_url"] = partner["site_url"] if partner else "?"
+            ed["_partner_email"] = partner["email"] if partner else ""
+            ed["_partner_dr"] = partner["dr"] if partner else 0
+            outgoing.append(ed)
     return render_template("dashboard.html", sites=sites, requests=resolved,
-                           notice=notice, site_url=SITE_URL)
+                           outgoing=outgoing, notice=notice, site_url=SITE_URL)
 
 
 @app.route("/edit/<int:site_id>", methods=["GET", "POST"])
@@ -1177,6 +1195,96 @@ def exchange_done(exchange_id):
     db.execute("UPDATE exchanges SET status='done' WHERE id=?", (exchange_id,))
     db.commit()
     return redirect(url_for("admin"))
+
+
+@app.route("/my-exchange/<int:exchange_id>/done", methods=["POST"])
+def my_exchange_done(exchange_id):
+    """User marks their exchange as completed (link placed on both sides)."""
+    if "user_email" not in session:
+        return redirect(url_for("login"))
+    db = get_db()
+    ex = db.execute("SELECT * FROM exchanges WHERE id=?", (exchange_id,)).fetchone()
+    if not ex:
+        return "Not found", 404
+    # verify ownership: exchange must be from one of user's sites
+    owns = db.execute(
+        "SELECT 1 FROM sites WHERE id=? AND email=?",
+        (ex["from_site_id"], session["user_email"])).fetchone()
+    if not owns:
+        return "Not authorized", 403
+    db.execute("UPDATE exchanges SET status='done' WHERE id=?", (exchange_id,))
+    db.commit()
+    return redirect(url_for("dashboard", msg="exchangedone"))
+
+
+@app.route("/my-exchange/<int:exchange_id>/report-removed", methods=["POST"])
+def my_exchange_report_removed(exchange_id):
+    """User reports partner removed the link -> send warning/removal email to partner."""
+    if "user_email" not in session:
+        return redirect(url_for("login"))
+    db = get_db()
+    ex = db.execute("SELECT * FROM exchanges WHERE id=?", (exchange_id,)).fetchone()
+    if not ex:
+        return "Not found", 404
+    owns = db.execute(
+        "SELECT 1 FROM sites WHERE id=? AND email=?",
+        (ex["from_site_id"], session["user_email"])).fetchone()
+    if not owns:
+        return "Not authorized", 403
+    partner = db.execute(
+        "SELECT site_name, site_url, email FROM sites WHERE id=?",
+        (ex["to_site_id"],)).fetchone()
+    my_site = db.execute(
+        "SELECT site_name, site_url FROM sites WHERE id=?",
+        (ex["from_site_id"],)).fetchone()
+    db.execute("UPDATE exchanges SET status='warning' WHERE id=?", (exchange_id,))
+    db.commit()
+    # warning email to partner
+    if partner and partner["email"]:
+        send_mail(
+            partner["email"],
+            f"⚠️ Link Removal Warning – {my_site['site_name'] if my_site else 'Partner'}",
+            f"""<!DOCTYPE html>
+<html><body style="margin:0;padding:0;background:#f4f6fb;font-family:Arial,sans-serif">
+<center style="width:100%">
+<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#f4f6fb;padding:24px 0">
+<tr><td align="center">
+<table role="presentation" width="600" cellspacing="0" cellpadding="0" border="0" style="max-width:600px;width:100%">
+  <tr>
+    <td align="center" style="background:linear-gradient(135deg,#b8860b 0%,#e6a700 55%,#ff8c00 100%);border-radius:16px 16px 0 0;padding:32px 24px">
+      <div style="font-size:40px;line-height:1">⚠️</div>
+      <h1 style="color:#ffffff;margin:12px 0 6px;font-size:22px;font-weight:800;font-family:Arial,sans-serif">Link Removal Warning</h1>
+      <p style="color:rgba(255,255,255,.95);margin:0;font-size:14px;font-family:Arial,sans-serif">Action needed on your link exchange</p>
+    </td>
+  </tr>
+  <tr>
+    <td style="background:#ffffff;border-radius:0 0 16px 16px;padding:28px 24px">
+      <p style="font-size:14px;color:#3a4a63;line-height:1.7;margin:0 0 20px;font-family:Arial,sans-serif">
+        Your exchange partner <b>{my_site['site_name'] if my_site else '?'}</b> has reported that your link appears to have been <b>removed</b> from <b>{partner['site_name']}</b>.
+      </p>
+      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="border:1px solid #e3e8f2;border-radius:12px;margin-bottom:20px">
+        <tr><td style="background:#f8faff;padding:12px 20px;font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:#b8860b;border-bottom:1px solid #e3e8f2;border-radius:12px 12px 0 0;font-family:Arial,sans-serif">Exchange Details</td></tr>
+        <tr><td style="padding:12px 20px;color:#5a6b85;font-weight:600;font-size:13px;font-family:Arial,sans-serif">Partner site</td></tr>
+        <tr><td style="padding:2px 20px 12px;color:#0f1b33;font-weight:700;font-size:14px;font-family:Arial,sans-serif">{my_site['site_name'] if my_site else '?'} · {my_site['site_url'] if my_site else ''}</td></tr>
+        <tr style="background:#fafbfe"><td style="padding:12px 20px;color:#5a6b85;font-weight:600;font-size:13px;font-family:Arial,sans-serif">Your site</td></tr>
+        <tr style="background:#fafbfe"><td style="padding:2px 20px 12px;color:#0f1b33;font-weight:700;font-size:14px;font-family:Arial,sans-serif">{partner['site_name']} · {partner['site_url']}</td></tr>
+      </table>
+      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#fff8e6;border:1px solid #ffe4a1;border-radius:10px;margin-bottom:20px">
+        <tr><td style="padding:14px 18px;font-size:13px;color:#7a6500;line-height:1.6;font-family:Arial,sans-serif">💡 <b>What to do:</b> Please restore the link on your site, or contact your partner to resolve this. If the link is already live, ignore this message — your partner may have checked too early.</td></tr>
+      </table>
+      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="border-top:1px solid #eef1f7">
+        <tr><td align="center" style="padding-top:16px">
+          <p style="font-size:12px;color:#8a97ad;margin:0;font-family:Arial,sans-serif">Sent via <b style="color:#2f7cf6">TWH Link Exchange Directory</b></p>
+        </td></tr>
+      </table>
+    </td>
+  </tr>
+</table>
+</td></tr>
+</table>
+</center>
+</body></html>""")
+    return redirect(url_for("dashboard", msg="warningsent"))
 
 
 @app.route("/sitemap.xml")
