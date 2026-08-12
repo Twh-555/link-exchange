@@ -1031,6 +1031,53 @@ def exchange(site_id):
 </table>
 </center>
 </body></html>""")
+        # confirmation email to the REQUESTER (the person sending the request)
+        if your_email:
+            send_mail(
+                your_email,
+                f"✅ Exchange Request Sent – {site['site_name']}",
+                f"""<!DOCTYPE html>
+<html><body style="margin:0;padding:0;background:#f4f6fb;font-family:Arial,sans-serif">
+<center style="width:100%">
+<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#f4f6fb;padding:24px 0">
+<tr><td align="center">
+<table role="presentation" width="600" cellspacing="0" cellpadding="0" border="0" style="max-width:600px;width:100%">
+  <tr>
+    <td align="center" style="background:linear-gradient(135deg,#0a7a3d 0%,#2f9e63 60%,#6c5ce7 100%);border-radius:16px 16px 0 0;padding:32px 24px">
+      <div style="font-size:40px;line-height:1">✅</div>
+      <h1 style="color:#ffffff;margin:12px 0 6px;font-size:22px;font-weight:800;font-family:Arial,sans-serif">Request Sent!</h1>
+      <p style="color:rgba(255,255,255,.95);margin:0;font-size:14px;font-family:Arial,sans-serif">Your link exchange request is on its way</p>
+    </td>
+  </tr>
+  <tr>
+    <td style="background:#ffffff;border-radius:0 0 16px 16px;padding:28px 24px">
+      <p style="font-size:14px;color:#3a4a63;line-height:1.7;margin:0 0 20px;font-family:Arial,sans-serif">
+        Hi {your_name or 'there'}! Your link exchange request to <b>{site['site_name']}</b> ({site['site_url']}) has been sent successfully.
+      </p>
+      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="border:1px solid #e3e8f2;border-radius:12px;margin-bottom:20px">
+        <tr><td style="background:#f8faff;padding:12px 20px;font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:#2f7cf6;border-bottom:1px solid #e3e8f2;border-radius:12px 12px 0 0;font-family:Arial,sans-serif">Request Details</td></tr>
+        <tr><td style="padding:12px 20px;color:#5a6b85;font-weight:600;font-size:13px;font-family:Arial,sans-serif">Requested site</td></tr>
+        <tr><td style="padding:2px 20px 12px;color:#0f1b33;font-weight:700;font-size:14px;font-family:Arial,sans-serif">{site['site_name']} · {site['site_url']}</td></tr>
+        <tr style="background:#fafbfe"><td style="padding:12px 20px;color:#5a6b85;font-weight:600;font-size:13px;font-family:Arial,sans-serif">Your website</td></tr>
+        <tr style="background:#fafbfe"><td style="padding:2px 20px 12px;color:#0f1b33;font-weight:700;font-size:14px;font-family:Arial,sans-serif">{your_site or '—'}</td></tr>
+        <tr><td style="padding:12px 20px;color:#5a6b85;font-weight:600;font-size:13px;font-family:Arial,sans-serif">Message</td></tr>
+        <tr><td style="padding:2px 20px 14px;color:#3a4a63;line-height:1.6;font-size:14px;font-family:Arial,sans-serif">{message or '—'}</td></tr>
+      </table>
+      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#fff8e6;border:1px solid #ffe4a1;border-radius:10px;margin-bottom:20px">
+        <tr><td style="padding:14px 18px;font-size:13px;color:#7a6500;line-height:1.6;font-family:Arial,sans-serif">💡 <b>What's next?</b> The site owner has been notified and will reply to you by email. Track all your requests in your <a href="{SITE_URL}/link-exchange/messages" style="color:#2f7cf6;font-weight:700;text-decoration:none">Messages</a> inbox.</td></tr>
+      </table>
+      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="border-top:1px solid #eef1f7">
+        <tr><td align="center" style="padding-top:16px">
+          <p style="font-size:12px;color:#8a97ad;margin:0;font-family:Arial,sans-serif">Sent via <b style="color:#2f7cf6">TWH Link Exchange Directory</b></p>
+        </td></tr>
+      </table>
+    </td>
+  </tr>
+</table>
+</td></tr>
+</table>
+</center>
+</body></html>""")
         msg = "✅ Request sent! The site owner will contact you. (For faster results, try our guest post service below.)"
         if your_email and mail_ok:
             msg = "✅ Request sent! The site owner has been notified by email and will contact you. (For faster results, try our guest post service below.)"
