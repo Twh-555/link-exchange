@@ -361,6 +361,20 @@ def bulk_upload():
                            site_url=SITE_URL, niches=NICHES)
 
 
+@app.route("/directory")
+def directory():
+    """Clean directory page - just the sites list, no hero/SEO content."""
+    db = get_db()
+    sites = db.execute(
+        "SELECT * FROM sites WHERE status='active' ORDER BY owner_verified DESC, dr DESC").fetchall()
+    exch_counts = {}
+    for row in db.execute(
+            "SELECT site_url, COUNT(*) c FROM sites WHERE status IN ('active','pending') GROUP BY site_url").fetchall():
+        exch_counts[row["site_url"]] = row["c"]
+    return render_template("directory.html", sites=sites, niches=NICHES,
+                           exch_counts=exch_counts, site_url=SITE_URL)
+
+
 @app.route("/submit", methods=["GET", "POST"])
 def submit():
     db = get_db()

@@ -1,0 +1,146 @@
+{% extends 'base.html' %}
+{% block title %}Link Exchange Sites Directory – Free Link Exchange Partners | TWH{% endblock %}
+{% block canonical %}{{ site_url }}/link-exchange/directory{% endblock %}
+{% block meta_desc %}Browse free link exchange sites by niche and Domain Rating. Find link exchange partners, send exchange requests, and build quality backlinks.{% endblock %}
+
+{% block content %}
+<section class="hero-section text-center" style="padding-bottom:8px">
+  <div class="hero-badge"><i class="fa-solid fa-arrow-right-arrow-left"></i> Link Exchange Directory</div>
+  <h1 class="page-title"><span class="gradient-text">Link Exchange Sites</span></h1>
+  <p class="page-subtitle">Browse {{ sites|length }} sites looking for link exchanges — filter by niche, then send a free exchange request.</p>
+  <div class="hero-actions" style="margin-top:14px;display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+    <a class="btn btn-primary btn-sm" href="{{ url_for('submit') }}"><i class="fa-solid fa-plus"></i> Add Your Site (Free)</a>
+  </div>
+</section>
+
+<!-- Filters -->
+<div class="filter-bar">
+  <input class="form-control" id="q" placeholder="Search sites by name or keyword...">
+  <select class="form-control" id="niche" style="max-width:240px">
+    {% for n in niches %}<option value="{{ n }}">{{ n }}</option>{% endfor %}
+  </select>
+</div>
+
+<div class="directory-wrap" id="directoryWrap">
+  <div class="directory-grid" id="grid">
+    {% for s in sites %}
+    <div class="site-card" data-name="{{ s.site_name.lower() }}" data-niche="{{ s.niche }}">
+      <div class="site-card-top">
+        <h3><a class="site-name-lock" href="{{ s.site_url }}" target="_blank" rel="nofollow">{{ s.site_name }}</a></h3>
+      </div>
+      <p class="desc">{{ s.description[:100] }}</p>
+      <div class="site-meta">
+        <span class="badge-tag tag-dr">DR {{ s.dr }}</span>
+        <span class="badge-tag tag-da">DA {{ s.da }}</span>
+        {% if s.owner_verified %}<span class="badge-tag tag-owner"><i class="fa-solid fa-circle-check"></i> Verified Owner</span>{% endif %}
+        {% if exch_counts.get(s.site_url, 0) > 1 %}<span class="badge-tag tag-exch"><i class="fa-solid fa-users"></i> {{ exch_counts.get(s.site_url) }} Exchangers Available</span>{% endif %}
+        {% if s.traffic %}<span class="badge-tag tag-traffic"><i class="fa-solid fa-chart-line"></i> {{ s.traffic }}</span>{% endif %}
+        {% for n in (s.niche or '').split(', ') %}
+          {% if n %}<span class="badge-tag tag-niche">{{ n }}</span>{% endif %}
+        {% endfor %}
+        <span class="badge-tag tag-free">Link Exchange</span>
+      </div>
+      <div class="site-actions">
+        <a class="btn btn-primary btn-sm" href="{{ url_for('exchange', site_id=s.id) }}"><i class="fa-solid fa-arrow-right-arrow-left"></i> Request Exchange</a>
+        <a class="btn btn-primary btn-outline btn-sm" href="{{ url_for('site_page', site_id=s.id) }}"><i class="fa-solid fa-eye"></i> Profile</a>
+      </div>
+    </div>
+    {% else %}
+    <div class="empty-state" style="grid-column:1/-1">
+      <i class="fa-solid fa-link-slash"></i>
+      <p>No sites yet — be the first to <a href="{{ url_for('submit') }}">add your site</a>!</p>
+    </div>
+    {% endfor %}
+  </div>
+  {% if sites|length > 9 %}
+  <div id="loadMoreWrap" style="text-align:center;margin:24px 0 8px">
+    <button id="loadMoreBtn" class="btn btn-primary btn-outline" type="button">
+      <i class="fa-solid fa-arrow-down"></i> Show More Sites
+    </button>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  // ===== Search filter + no-results state =====
+  const q=document.getElementById('q'), n=document.getElementById('niche');
+  const grid = document.getElementById('grid');
+  let noResults = document.getElementById('noResultsState');
+  if (!noResults) {
+    noResults = document.createElement('div');
+    noResults.id = 'noResultsState';
+    noResults.style.cssText = 'grid-column:1/-1;text-align:center;padding:48px 24px;display:none';
+    noResults.innerHTML = `
+      <div style="width:72px;height:72px;border-radius:50%;background:#eef4ff;display:flex;align-items:center;justify-content:center;margin:0 auto 16px">
+        <i class="fa-solid fa-magnifying-glass" style="font-size:1.8rem;color:#2f7cf6"></i>
+      </div>
+      <h3 style="margin-bottom:8px;color:var(--dark,#0f1b33)">No matching sites found for "<span id="noResQ"></span>"</h3>
+      <p style="color:var(--muted,#5a6b85);max-width:420px;margin:0 auto 18px;line-height:1.7">This website isn't listed in the directory yet.</p>
+      <a class="btn btn-primary" href="{{ url_for('submit') }}"><i class="fa-solid fa-plus"></i> It's Your Site? Add It Now — Free</a>`;
+    grid.parentNode.appendChild(noResults);
+  }
+  function filter(){
+    const query=q.value.toLowerCase();
+    const niche=n.value;
+    let visible = 0;
+    document.querySelectorAll('#grid .site-card').forEach(c=>{
+      const okQ=c.dataset.name.includes(query)||!query;
+      const niches=(c.dataset.niche||'').toLowerCase().split(', ');
+      const okN=niche==='All'||niches.includes(niche.toLowerCase());
+      const show = okQ && okN;
+      c.style.display = show ? '' : 'none';
+      if (show) visible++;
+    });
+    const searching = query !== '' || niche !== 'All';
+    const lm = document.getElementById('loadMoreWrap');
+    if (searching) { if (lm) lm.style.display = 'none'; }
+    else {
+      const cards = [...document.querySelectorAll('#grid .site-card')];
+      let shown = 0;
+      cards.forEach(c => { if (c.style.display !== 'none') shown++; });
+      if (lm && shown > 9) {
+        cards.forEach((c, i) => { if (i >= 9) c.style.display = 'none'; });
+        lm.style.display = 'block';
+      }
+    }
+    if (visible === 0 && query) {
+      document.getElementById('noResQ').textContent = query;
+      noResults.style.display = 'block';
+    } else noResults.style.display = 'none';
+  }
+  q.addEventListener('input',filter); n.addEventListener('change',filter);
+
+  // ===== Show 9 + Load More =====
+  (function(){
+    const PAGE = 9;
+    const cards = [...document.querySelectorAll('#grid .site-card')];
+    if (cards.length <= PAGE) return;
+    const btnWrap = document.getElementById('loadMoreWrap');
+    const btn = document.getElementById('loadMoreBtn');
+    let visible = PAGE;
+    cards.forEach((c, i) => { if (i >= PAGE) c.style.display = 'none'; });
+    function showMore(){
+      let revealed = 0;
+      for (let i = visible; i < cards.length && revealed < PAGE; i++){
+        cards[i].style.display = '';
+        revealed++;
+        visible = i + 1;
+      }
+      if (visible >= cards.length && btnWrap) btnWrap.style.display = 'none';
+    }
+    if (btn) btn.addEventListener('click', showMore);
+    let lastLoad = 0;
+    window.addEventListener('scroll', function(){
+      const now = Date.now();
+      if (now - lastLoad < 500) return;
+      if (btnWrap && btnWrap.style.display === 'none') return;
+      if (window.innerHeight + window.scrollY >= document.body.scrollHeight - 600){
+        lastLoad = now;
+        showMore();
+      }
+    });
+  })();
+</script>
+{% endblock %}
