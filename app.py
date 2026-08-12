@@ -55,6 +55,23 @@ CONTACT_EMAIL = os.environ.get("CONTACT_EMAIL", "hello@thewebhospitality.com")
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "change-me-in-production")
 
+
+@app.context_processor
+def inject_user():
+    """Make login state + user's sites available to ALL templates."""
+    user_email = session.get("user_email", "")
+    user_name = ""
+    user_sites = []
+    if user_email:
+        db = get_db()
+        user_sites = db.execute(
+            "SELECT site_name FROM sites WHERE email=? ORDER BY id DESC LIMIT 3",
+            (user_email,)).fetchall()
+        if user_sites:
+            user_name = user_sites[0]["site_name"]
+    return dict(user_email=user_email, user_name=user_name,
+                user_sites_list=user_sites)
+
 ADMIN_USERNAME = os.environ.get("ADMIN_USERNAME", "admin")
 ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "twh@linkexchange")
 

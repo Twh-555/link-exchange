@@ -35,6 +35,20 @@
 
 {% include '_footer.html' %}
 <script>
+  // ===== User account dropdown (header) =====
+  document.addEventListener('DOMContentLoaded', function () {
+    var menu = document.getElementById('userMenu');
+    if (!menu) return;
+    var btn = menu.querySelector('.user-menu-btn');
+    btn.addEventListener('click', function (e) {
+      e.stopPropagation();
+      menu.classList.toggle('open');
+    });
+    document.addEventListener('click', function (e) {
+      if (!menu.contains(e.target)) menu.classList.remove('open');
+    });
+  });
+
   // ===== FAQ accordion (click to expand/collapse) =====
   document.addEventListener('DOMContentLoaded', function () {
     document.querySelectorAll('.faq-item .faq-question').forEach(function (q) {
