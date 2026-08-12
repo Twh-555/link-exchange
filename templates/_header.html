@@ -13,6 +13,12 @@
 
       <nav class="twh-nav">
         <div class="nav-links" id="mainNavLinks">
+          {% if user_email %}
+          <!-- Logged-in: simplified nav -->
+          <a href="{{ url_for('index') }}" class="nav-link active"><i class="fa-solid fa-arrow-right-arrow-left"></i> Link Exchange Sites</a>
+          <a href="{{ url_for('dashboard') }}" class="nav-link"><i class="fa-solid fa-gauge-high"></i> My Dashboard</a>
+          <a href="{{ url_for('submit') }}" class="nav-link"><i class="fa-solid fa-plus"></i> List Your Website</a>
+          {% else %}
           <a href="https://www.thewebhospitality.com/" class="nav-link"><i class="fa-solid fa-house"></i> Home</a>
 
           <!-- Explore Dropdown -->
@@ -79,6 +85,7 @@
           <a href="{{ url_for('logout') }}" class="nav-link nav-login-mobile"><i class="fa-solid fa-right-from-bracket"></i> Logout</a>
           {% else %}
           <a href="{{ url_for('login') }}" class="nav-link nav-login-mobile"><i class="fa-solid fa-right-to-bracket"></i> Login / My Account</a>
+          {% endif %}
           {% endif %}
         </div>
 
