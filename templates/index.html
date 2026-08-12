@@ -115,9 +115,6 @@
 </div>
 
 <div class="directory-wrap locked" id="directoryWrap" style="scroll-margin-top:80px">
-  <div style="text-align:right;margin-bottom:12px">
-    <a class="btn btn-primary btn-outline btn-sm" href="{{ url_for('directory') }}"><i class="fa-solid fa-layer-group"></i> Browse Full Directory</a>
-  </div>
   <div class="directory-grid" id="grid">
     {% for s in sites %}
     <div class="site-card" data-name="{{ s.site_name.lower() }}" data-niche="{{ s.niche }}">
@@ -149,9 +146,9 @@
   </div>
   {% if sites|length > 9 %}
   <div id="loadMoreWrap" style="text-align:center;margin:24px 0 8px">
-    <button id="loadMoreBtn" class="btn btn-primary btn-outline" type="button">
-      <i class="fa-solid fa-arrow-down"></i> Show More Sites
-    </button>
+    <a id="loadMoreBtn" class="btn btn-primary btn-outline" href="{{ url_for('directory') }}">
+      <i class="fa-solid fa-layer-group"></i> Show More Sites
+    </a>
   </div>
   {% endif %}
 </div>
@@ -361,39 +358,13 @@
   }
   q.addEventListener('input',filter); n.addEventListener('change',filter);
 
-  // ===== Show 9 + Load More (infinite scroll) =====
+  // ===== Show 9 + Show More -> full directory page =====
   (function(){
     const PAGE = 9;
     const cards = [...document.querySelectorAll('#grid .site-card')];
     if (cards.length <= PAGE) return;
-    const btnWrap = document.getElementById('loadMoreWrap');
-    const btn = document.getElementById('loadMoreBtn');
-    let visible = PAGE;
     // hide beyond first page
     cards.forEach((c, i) => { if (i >= PAGE) c.style.display = 'none'; });
-
-    function showMore(){
-      // reveal next PAGE cards (skip already-visible)
-      let revealed = 0;
-      for (let i = visible; i < cards.length && revealed < PAGE; i++){
-        cards[i].style.display = '';
-        revealed++;
-        visible = i + 1;
-      }
-      if (visible >= cards.length && btnWrap) btnWrap.style.display = 'none';
-    }
-    if (btn) btn.addEventListener('click', showMore);
-    // infinite scroll: load more when near bottom (throttled)
-    let lastLoad = 0;
-    window.addEventListener('scroll', function(){
-      const now = Date.now();
-      if (now - lastLoad < 500) return;           // throttle
-      if (btnWrap && btnWrap.style.display === 'none') return;
-      if (window.innerHeight + window.scrollY >= document.body.scrollHeight - 600){
-        lastLoad = now;
-        showMore();
-      }
-    });
   })();
 
   // ===== Name-blur gate: submit your site to unlock names =====
