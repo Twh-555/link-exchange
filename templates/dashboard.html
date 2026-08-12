@@ -98,22 +98,4 @@
   </div>
   {% endfor %}
 </div>
-
-<!-- Change Password -->
-<section class="seo-content-section" id="change-password" style="max-width:720px;margin:32px auto 0;scroll-margin-top:90px">
-  <div class="content-article">
-    <h2><i class="fa-solid fa-key"></i> Change Password</h2>
-    <form method="post" action="{{ url_for('change_password') }}" style="display:flex;flex-direction:column;gap:12px;max-width:420px">
-      <div class="form-group">
-        <label class="field-label">Current Password</label>
-        <input class="form-control" type="password" name="old_password" required placeholder="Current password">
-      </div>
-      <div class="form-group">
-        <label class="field-label">New Password (min 6 chars)</label>
-        <input class="form-control" type="password" name="new_password" required minlength="6" placeholder="New password">
-      </div>
-      <button class="btn btn-primary" type="submit" style="align-self:flex-start"><i class="fa-solid fa-lock"></i> Update Password</button>
-    </form>
-  </div>
-</section>
 {% endblock %}
