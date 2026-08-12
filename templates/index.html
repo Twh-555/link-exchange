@@ -145,6 +145,16 @@
     </div>
     {% endfor %}
   </div>
+  {% if sites|length > 9 %}
+  <div id="loadMoreWrap" style="text-align:center;margin:24px 0 8px">
+    <button id="loadMoreBtn" class="btn btn-primary btn-outline" type="button">
+      <i class="fa-solid fa-arrow-down"></i> Show More Sites ({{ sites|length - 9 }} more)
+    </button>
+  </div>
+  <p id="dirCount" style="text-align:center;color:var(--muted,#5a6b85);font-size:.8rem;margin:8px 0 0">
+    Showing <span id="shownCount">9</span> of {{ sites|length }} sites
+  </p>
+  {% endif %}
 </div>
 
 <!-- SEO Content -->
@@ -322,6 +332,30 @@
       c.style.display = show ? '' : 'none';
       if (show) visible++;
     });
+    // when searching/filtering: reveal ALL matching cards (bypass pagination)
+    const searching = query !== '' || niche !== 'All';
+    const lm = document.getElementById('loadMoreWrap');
+    if (searching) {
+      if (lm) lm.style.display = 'none';
+      const sc = document.getElementById('shownCount');
+      if (sc) sc.textContent = visible;
+    } else {
+      // restore pagination: hide beyond current page
+      const cards = [...document.querySelectorAll('#grid .site-card')];
+      let shown = 0;
+      cards.forEach(c => {
+        if (c.style.display !== 'none') shown++;
+      });
+      if (lm && shown > 9) {
+        let vis = 0;
+        cards.forEach((c, i) => {
+          if (i >= 9) { c.style.display = 'none'; }
+        });
+        lm.style.display = 'block';
+        const sc = document.getElementById('shownCount');
+        if (sc) sc.textContent = 9;
+      }
+    }
     // show "add your site" prompt when nothing matches
     if (visible === 0 && query) {
       document.getElementById('noResQ').textContent = query;
@@ -331,6 +365,43 @@
     }
   }
   q.addEventListener('input',filter); n.addEventListener('change',filter);
+
+  // ===== Show 9 + Load More (infinite scroll) =====
+  (function(){
+    const PAGE = 9;
+    const cards = [...document.querySelectorAll('#grid .site-card')];
+    if (cards.length <= PAGE) return;
+    const btnWrap = document.getElementById('loadMoreWrap');
+    const btn = document.getElementById('loadMoreBtn');
+    const shownEl = document.getElementById('shownCount');
+    let visible = PAGE;
+    // hide beyond first page
+    cards.forEach((c, i) => { if (i >= PAGE) c.style.display = 'none'; });
+
+    function showMore(){
+      // reveal next PAGE cards (skip already-visible)
+      let revealed = 0;
+      for (let i = visible; i < cards.length && revealed < PAGE; i++){
+        cards[i].style.display = '';
+        revealed++;
+        visible = i + 1;
+      }
+      if (shownEl) shownEl.textContent = visible;
+      if (visible >= cards.length && btnWrap) btnWrap.style.display = 'none';
+    }
+    if (btn) btn.addEventListener('click', showMore);
+    // infinite scroll: load more when near bottom (throttled)
+    let lastLoad = 0;
+    window.addEventListener('scroll', function(){
+      const now = Date.now();
+      if (now - lastLoad < 500) return;           // throttle
+      if (btnWrap && btnWrap.style.display === 'none') return;
+      if (window.innerHeight + window.scrollY >= document.body.scrollHeight - 600){
+        lastLoad = now;
+        showMore();
+      }
+    });
+  })();
 
   // ===== Name-blur gate: submit your site to unlock names =====
   (function(){
