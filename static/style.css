@@ -2030,3 +2030,7 @@ textarea.form-control {
 .user-dropdown-head { text-decoration: none; }
 .user-dropdown-head:hover { background: #f0f5ff; border-radius: 10px; }
 .user-caret { cursor: pointer; padding: 4px 2px 4px 8px; }
+
+/* logged-in users see site names (no blur) - higher specificity to beat .locked rule */
+.directory-wrap .site-name-lock.unlocked { filter: none; pointer-events: auto; user-select: auto; cursor: pointer; }
+.directory-wrap.locked .site-name-lock.unlocked { filter: none; pointer-events: auto; user-select: auto; cursor: pointer; }

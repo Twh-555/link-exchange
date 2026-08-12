@@ -36,7 +36,7 @@
             <div>
               <div style="font-weight:700;font-size:.88rem;color:var(--dark,#0f1b33)">{{ r._from_name or 'Anonymous' }}</div>
               <div style="font-size:.75rem;color:var(--muted,#8a97ad)">
-                {% if r._from_site %}<a href="https://{{ r._from_site }}" target="_blank" rel="nofollow" style="color:var(--accent,#2f7cf6)">{{ r._from_site }}</a>{% endif %}
+                {% if r._from_site %}<a href="https://{{ r._from_site }}" target="_blank" style="color:var(--accent,#2f7cf6)">{{ r._from_site }}</a>{% endif %}
                 {% if r._from_email %} · {{ r._from_email }}{% endif %}
               </div>
             </div>
@@ -75,7 +75,7 @@
   {% for s in sites %}
   <div class="site-card">
     <div class="site-card-top">
-      <h3><a href="{{ s.site_url }}" target="_blank" rel="nofollow">{{ s.site_name }}</a></h3>
+      <h3><a href="{{ s.site_url }}" target="_blank">{{ s.site_name }}</a></h3>
     </div>
     <p class="desc">{{ s.description[:100] }}</p>
     <div class="site-meta">

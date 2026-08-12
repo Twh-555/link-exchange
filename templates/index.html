@@ -119,7 +119,7 @@
     {% for s in sites %}
     <div class="site-card" data-name="{{ s.site_name.lower() }}" data-niche="{{ s.niche }}">
       <div class="site-card-top">
-        <h3><a class="site-name-lock{% if user_email %} unlocked{% endif %}" href="{{ s.site_url }}" target="_blank" rel="nofollow">{{ s.site_name }}</a></h3>
+        <h3><a class="site-name-lock{% if user_email %} unlocked{% endif %}" href="{{ s.site_url }}" target="_blank">{{ s.site_name }}</a></h3>
       </div>
       <p class="desc">{{ s.description[:100] }}</p>
       <div class="site-meta">

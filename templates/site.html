@@ -60,7 +60,7 @@
     <p class="desc" style="font-size:1rem;color:var(--muted,#5a6b85);line-height:1.7">{{ s.description }}</p>
 
     <div class="site-actions" style="margin-top:18px">
-      <a class="btn btn-primary" href="{{ s.site_url }}" target="_blank" rel="nofollow"><i class="fa-solid fa-arrow-up-right-from-square"></i> Visit Site</a>
+      <a class="btn btn-primary" href="{{ s.site_url }}" target="_blank"><i class="fa-solid fa-arrow-up-right-from-square"></i> Visit Site</a>
       <a class="btn btn-primary" href="{{ url_for('exchange', site_id=s.id) }}"><i class="fa-solid fa-arrow-right-arrow-left"></i> Request Link Exchange — Free</a>
     </div>
   </div>
