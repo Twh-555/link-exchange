@@ -1,0 +1,60 @@
+{% extends 'base.html' %}
+{% block title %}Bulk Add Sites – Upload CSV | TWH Link Exchange{% endblock %}
+{% block canonical %}{{ site_url }}/link-exchange/bulk{% endblock %}
+{% block robots %}noindex, follow{% endblock %}
+
+{% block content %}
+<section class="hero-section text-center">
+  <div class="hero-badge"><i class="fa-solid fa-file-csv"></i> Bulk Upload</div>
+  <h1 class="page-title"><span class="gradient-text">Add Multiple Sites at Once</span></h1>
+  <p class="page-subtitle">
+    Download the CSV template, fill in your sites, upload — all sites get added in one go.
+    Each row becomes a pending listing ready for review.
+  </p>
+  <div class="hero-actions" style="margin-top:14px;display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+    <a class="btn btn-primary" href="{{ url_for('bulk_template') }}"><i class="fa-solid fa-download"></i> Download CSV Template</a>
+    <a class="btn btn-primary btn-outline" href="{{ url_for('submit') }}"><i class="fa-solid fa-plus"></i> Add Single Site</a>
+  </div>
+</section>
+
+<div class="generator-grid" style="max-width:640px;margin:24px auto;grid-template-columns:1fr">
+  <div class="calc-card">
+    {% if msg %}
+      {% if ok %}
+      <div style="background:#f0faf4;border:1px solid #bfe8cd;border-radius:10px;padding:14px 16px;margin-bottom:16px;font-size:.9rem;color:#0a7a3d">{{ msg }}</div>
+      {% else %}
+      <div class="msg-err" style="margin-bottom:16px">{{ msg }}</div>
+      {% endif %}
+    {% endif %}
+    {% if errors %}
+    <div style="background:#fff8f0;border:1px solid #ffd9b3;border-radius:10px;padding:12px 16px;margin-bottom:16px;font-size:.8rem;color:#8a5a20;max-height:160px;overflow-y:auto">
+      <b>Issues found:</b>
+      <ul style="margin:6px 0 0;padding-left:18px">
+        {% for e in errors %}<li>{{ e }}</li>{% endfor %}
+      </ul>
+    </div>
+    {% endif %}
+    <form method="post" enctype="multipart/form-data" style="display:flex;flex-direction:column;gap:14px">
+      <div class="form-group">
+        <label class="field-label">CSV File (max 200 rows)</label>
+        <input class="form-control" type="file" name="csv_file" accept=".csv" required style="padding:10px">
+      </div>
+      <button class="btn btn-primary btn-block btn-lg" type="submit"><i class="fa-solid fa-upload"></i> Upload & Add Sites</button>
+    </form>
+
+    <div style="margin-top:20px;border-top:1px solid var(--border,#e3e8f2);padding-top:16px;font-size:.82rem;color:var(--muted,#5a6b85);line-height:1.7">
+      <b>CSV format (header row required):</b>
+      <pre style="background:#f6f8fc;border-radius:8px;padding:10px 12px;font-size:.75rem;overflow-x:auto;margin:8px 0">site_name,site_url,email,niche,dr,da,traffic
+Example Blog,exampleblog.com,owner@exampleblog.com,Technology,35,38,50K</pre>
+      <ul style="margin:8px 0 0;padding-left:18px">
+        <li><b>site_url</b> — domain only, no http:// (e.g. example.com)</li>
+        <li><b>email</b> — site owner contact email</li>
+        <li><b>niche</b> — comma-separated (e.g. Technology, Business)</li>
+        <li><b>dr / da</b> — numbers 0-100 (optional, 0 if unknown)</li>
+        <li><b>traffic</b> — e.g. 50K (optional)</li>
+        <li>Duplicate domains are skipped automatically</li>
+      </ul>
+    </div>
+  </div>
+</div>
+{% endblock %}

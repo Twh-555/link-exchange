@@ -57,6 +57,9 @@
     <div style="background:#eef4ff;border:1px solid #cfe0ff;border-radius:10px;padding:12px 16px;margin-bottom:18px;font-size:.85rem;color:#1a3a8f">
       <i class="fa-solid fa-envelope-circle-check"></i> <b>Note:</b> After submitting, you'll receive an email with a <b>verification link</b> (valid 24 hours) and your <b>login details</b>. You must verify your email before your listing goes for review.
     </div>
+    <div style="text-align:center;margin-bottom:14px">
+      <a class="btn btn-primary btn-outline btn-sm" href="{{ url_for('bulk_upload') }}"><i class="fa-solid fa-file-csv"></i> Have many sites? Bulk Upload via CSV</a>
+    </div>
     <form method="post" style="display:flex;flex-direction:column;gap:4px">
       <div class="form-group">
         <label class="field-label">Site Name</label>

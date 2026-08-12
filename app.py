@@ -249,6 +249,101 @@ def index():
                            exch_counts=exch_counts, site_url=SITE_URL)
 
 
+@app.route("/bulk-template")
+def bulk_template():
+    """Download CSV template for bulk site upload."""
+    import io
+    import csv as csvmod
+    buf = io.StringIO()
+    w = csvmod.writer(buf)
+    w.writerow(["site_name", "site_url", "email", "niche", "dr", "da", "traffic"])
+    w.writerow(["Example Blog", "exampleblog.com", "owner@exampleblog.com", "Technology", "35", "38", "50K"])
+    w.writerow(["Sample Site", "samplesite.io", "hello@samplesite.io", "Business, Finance", "28", "30", "10K"])
+    data = buf.getvalue()
+    resp = app.response_class(
+        "\ufeff" + data,  # BOM so Excel opens UTF-8 correctly
+        mimetype="text/csv",
+        headers={"Content-Disposition": "attachment; filename=bulk-sites-template.csv"})
+    return resp
+
+
+@app.route("/bulk", methods=["GET", "POST"])
+def bulk_upload():
+    """Bulk add sites from CSV upload."""
+    db = get_db()
+    msg, ok = "", False
+    added = 0
+    errors = []
+    if request.method == "POST":
+        file = request.files.get("csv_file")
+        if not file or not file.filename:
+            msg = "❌ Please choose a CSV file to upload."
+        elif not file.filename.lower().endswith(".csv"):
+            msg = "❌ Only .csv files are supported. Download the template and fill it in."
+        else:
+            import io
+            import csv as csvmod
+            try:
+                raw = file.read().decode("utf-8-sig", errors="replace")
+                rows = list(csvmod.DictReader(io.StringIO(raw)))
+            except Exception as exc:
+                rows = []
+                msg = f"❌ Could not parse CSV: {str(exc)[:80]}"
+            if rows and not msg:
+                now = datetime.utcnow().isoformat()
+                for i, r in enumerate(rows, start=2):
+                    name = (r.get("site_name") or "").strip()
+                    url = normalize_url(r.get("site_url") or "")
+                    email = (r.get("email") or "").strip().lower()
+                    niche = (r.get("niche") or "").strip()
+                    try:
+                        dr = int(float(r.get("dr") or 0))
+                        da = int(float(r.get("da") or 0))
+                    except (ValueError, TypeError):
+                        dr = da = 0
+                    traffic = (r.get("traffic") or "").strip()
+                    if not url or not email:
+                        errors.append(f"Row {i}: missing site_url or email — skipped")
+                        continue
+                    if not re.match(r"^[a-z0-9\-\.]+\.[a-z]{2,}$", url):
+                        errors.append(f"Row {i}: invalid domain '{url}' — skipped")
+                        continue
+                    if not re.match(r"^[^@\s]+@[^@\s]+\.[^@\s]+$", email):
+                        errors.append(f"Row {i}: invalid email '{email}' — skipped")
+                        continue
+                    # duplicate check
+                    dup = db.execute(
+                        "SELECT 1 FROM sites WHERE site_url=? LIMIT 1", (url,)).fetchone()
+                    if dup:
+                        errors.append(f"Row {i}: '{url}' already listed — skipped")
+                        continue
+                    dr = max(0, min(100, dr))
+                    da = max(0, min(100, da))
+                    token = secrets.token_urlsafe(16)
+                    password = secrets.token_urlsafe(6)
+                    site_domain = url.split("/")[0].lower()
+                    email_domain = email.split("@")[-1].lower()
+                    owner_verified = 1 if email_domain == site_domain else 0
+                    db.execute(
+                        """INSERT INTO sites (site_name, site_url, email, niche, description,
+                           dr, da, status, created_at, approved_at, traffic, token, password,
+                           verified, owner_verified)
+                           VALUES (?,?,?,?,?,?,?, 'pending', ?, NULL, ?, ?, ?, 1, ?)""",
+                        (name[:60] or url, url, email, niche[:100], "",
+                         dr, da, now, traffic, token, password, owner_verified))
+                    db.commit()
+                    added += 1
+                if added:
+                    ok = True
+                    msg = f"✅ {added} site(s) added from CSV! They're pending review — approve them from the admin panel."
+                else:
+                    msg = "❌ No valid rows found. Check the errors below."
+            elif not msg:
+                msg = "❌ CSV file is empty or missing header row. Download the template."
+    return render_template("bulk.html", msg=msg, ok=ok, errors=errors,
+                           site_url=SITE_URL, niches=NICHES)
+
+
 @app.route("/submit", methods=["GET", "POST"])
 def submit():
     db = get_db()
