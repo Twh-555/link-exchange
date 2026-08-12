@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% block title %}My Listings – Link Exchange Dashboard | TWH{% endblock %}
+{% block title %}My Dashboard – Link Exchange | TWH{% endblock %}
 {% block canonical %}{{ site_url }}/link-exchange/dashboard{% endblock %}
 {% block robots %}noindex, follow{% endblock %}
 {% block meta_desc %}Your link exchange listings dashboard.{% endblock %}
@@ -8,19 +8,6 @@
 {% if notice %}
 <div style="max-width:720px;margin:16px auto 0;background:#f0faf4;border:1px solid #bfe8cd;border-radius:10px;padding:12px 16px;font-size:.9rem;color:#0a7a3d">{{ notice }}</div>
 {% endif %}
-<section class="hero-section text-center">
-  <div class="hero-badge"><i class="fa-solid fa-gauge-high"></i> My Dashboard</div>
-  <h1 class="page-title"><span class="gradient-text">My Listings</span></h1>
-  <p class="page-subtitle">
-    Logged in as <b>{{ sites[0].email if sites else 'member' }}</b>
-    {% if sites|length > 1 %} — {{ sites|length }} listings{% endif %}
-  </p>
-  <div class="hero-actions" style="margin-top:16px;display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
-    <a class="btn btn-primary" href="{{ url_for('submit') }}"><i class="fa-solid fa-plus"></i> Add Another Site</a>
-    <a class="btn btn-primary btn-outline" href="{{ url_for('index') }}"><i class="fa-solid fa-arrow-right-arrow-left"></i> Find Exchange Partners</a>
-    <a class="btn btn-primary btn-outline" href="{{ url_for('logout') }}"><i class="fa-solid fa-right-from-bracket"></i> Logout</a>
-  </div>
-</section>
 
 <!-- Incoming Exchange Requests -->
 <section class="seo-content-section" style="max-width:720px;margin:28px auto 0">
@@ -68,8 +55,8 @@
   </div>
 </section>
 
-<!-- My Listings -->
-<h2 style="max-width:720px;margin:36px auto 0;font-size:1.25rem"><i class="fa-solid fa-globe"></i> My Listings</h2>
+<!-- My Sites -->
+<h2 style="max-width:720px;margin:36px auto 0;font-size:1.25rem"><i class="fa-solid fa-globe"></i> My Sites</h2>
 
 <div class="directory-grid" style="margin-top:24px">
   {% for s in sites %}
