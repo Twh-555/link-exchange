@@ -176,8 +176,11 @@ CREATE TABLE IF NOT EXISTS exchanges (
     from_site_id INTEGER,
     to_site_id INTEGER,
     message TEXT DEFAULT '',
-    status TEXT DEFAULT 'pending',   -- pending | contacted | done
-    created_at TEXT NOT NULL
+    status TEXT DEFAULT 'pending',   -- pending | contacted | done | warning
+    created_at TEXT NOT NULL,
+    my_link TEXT DEFAULT '',         -- link placed BY user ON partner's site
+    partner_link TEXT DEFAULT '',    -- link placed BY partner ON user's site
+    last_checked TEXT DEFAULT ''
 );
 """
 
@@ -203,6 +206,12 @@ def get_db():
             g.db.execute("ALTER TABLE sites ADD COLUMN verify_token TEXT DEFAULT ''")
         if "owner_verified" not in cols:
             g.db.execute("ALTER TABLE sites ADD COLUMN owner_verified INTEGER DEFAULT 0")
+        # exchanges migration: my_link/partner_link/last_checked
+        ecols = [r[1] for r in g.db.execute("PRAGMA table_info(exchanges)").fetchall()]
+        if "my_link" not in ecols:
+            g.db.execute("ALTER TABLE exchanges ADD COLUMN my_link TEXT DEFAULT ''")
+            g.db.execute("ALTER TABLE exchanges ADD COLUMN partner_link TEXT DEFAULT ''")
+            g.db.execute("ALTER TABLE exchanges ADD COLUMN last_checked TEXT DEFAULT ''")
         g.db.commit()
     return g.db
 
@@ -222,6 +231,19 @@ def normalize_url(url: str) -> str:
     if url.startswith("www."):
         url = url[4:]
     return url
+
+
+def check_link_live(link_url: str) -> bool:
+    """Check if a placed backlink URL is still live (HTTP 200 and reachable)."""
+    if not link_url:
+        return None
+    url = link_url if link_url.startswith("http") else "https://" + link_url
+    try:
+        r = requests.get(url, timeout=15,
+                         headers={"User-Agent": "Mozilla/5.0 (compatible; TWH-LinkCheck/1.0)"})
+        return r.status_code < 400
+    except Exception:
+        return False
 
 
 def fetch_dr_da(domain: str) -> tuple[int, int]:
@@ -927,6 +949,8 @@ def tracking():
         my_site_id = int(f.get("my_site_id") or 0)
         partner_site_id = int(f.get("partner_site_id") or 0)
         note = f.get("note", "").strip()[:300]
+        my_link = f.get("my_link", "").strip()[:300]      # link user placed ON partner's site
+        partner_link = f.get("partner_link", "").strip()[:300]  # link partner placed ON user's site
         # verify ownership of my site
         owns = db.execute(
             "SELECT 1 FROM sites WHERE id=? AND email=?",
@@ -939,14 +963,14 @@ def tracking():
         else:
             my_site = db.execute("SELECT site_name, site_url, email FROM sites WHERE id=?", (my_site_id,)).fetchone()
             db.execute(
-                "INSERT INTO exchanges (from_site_id, to_site_id, message, status, created_at)"
-                " VALUES (?,?,?, 'pending', ?)",
+                "INSERT INTO exchanges (from_site_id, to_site_id, message, status, created_at, my_link, partner_link)"
+                " VALUES (?,?,?, 'pending', ?, ?, ?)",
                 (my_site_id, partner_site_id,
                  f"{my_site['site_name']} | {my_site['email']} | {my_site['site_url']}: "
                  f"[Exchange recorded manually] {note}",
-                 datetime.utcnow().isoformat()))
+                 datetime.utcnow().isoformat(), my_link, partner_link))
             db.commit()
-            msg, ok = f"✅ Exchange with {partner['site_name']} recorded! Now place both links and mark it done.", True
+            msg, ok = f"✅ Exchange with {partner['site_name']} recorded! Links saved — use Check Links to verify they're live.", True
 
     # exchanges list
     outgoing = []
@@ -964,6 +988,22 @@ def tracking():
             ed["_partner_email"] = partner["email"] if partner else ""
             ed["_partner_dr"] = partner["dr"] if partner else 0
             outgoing.append(ed)
+    # check result message
+    check_msg = request.args.get("msg", "")
+    warned = request.args.get("warned", "0") == "1"
+    check_msgs = {
+        "ok": "✅ Both links are LIVE. Nothing to worry about.",
+        "myremoved": "⚠️ YOUR link on the partner's site is NOT reachable. Check if they removed it — contact them or restore it.",
+        "partnerremoved": "⚠️ The PARTNER's link on your site is NOT reachable.",
+    }
+    if check_msg in check_msgs:
+        if check_msg == "partnerremoved" and warned:
+            msg = check_msgs[check_msg] + " Warning email sent to your partner."
+        elif check_msg == "partnerremoved":
+            msg = check_msgs[check_msg] + " No email sent (partner has no email on file)."
+        else:
+            msg = check_msgs[check_msg]
+        ok = check_msg == "ok"
     # all active directory sites for partner picker
     partners = db.execute(
         "SELECT id, site_name, site_url, dr, niche FROM sites WHERE status='active' ORDER BY dr DESC").fetchall()
@@ -1257,6 +1297,90 @@ def exchange_done(exchange_id):
     db.execute("UPDATE exchanges SET status='done' WHERE id=?", (exchange_id,))
     db.commit()
     return redirect(url_for("admin"))
+
+
+@app.route("/my-exchange/<int:exchange_id>/check-links", methods=["POST"])
+def my_exchange_check_links(exchange_id):
+    """Check both links in an exchange - warn partner if their link is removed."""
+    if "user_email" not in session:
+        return redirect(url_for("login"))
+    db = get_db()
+    ex = db.execute("SELECT * FROM exchanges WHERE id=?", (exchange_id,)).fetchone()
+    if not ex:
+        return "Not found", 404
+    owns = db.execute(
+        "SELECT 1 FROM sites WHERE id=? AND email=?",
+        (ex["from_site_id"], session["user_email"])).fetchone()
+    if not owns:
+        return "Not authorized", 403
+
+    my_link_ok = check_link_live(ex["my_link"])      # link on PARTNER's site
+    partner_link_ok = check_link_live(ex["partner_link"])  # link on USER's site
+    now = datetime.utcnow().isoformat()
+
+    # partner's link on MY site is removed -> warning email to partner
+    warned = False
+    if partner_link_ok is False:
+        partner = db.execute(
+            "SELECT site_name, site_url, email FROM sites WHERE id=?",
+            (ex["to_site_id"],)).fetchone()
+        my_site = db.execute(
+            "SELECT site_name, site_url FROM sites WHERE id=?",
+            (ex["from_site_id"],)).fetchone()
+        db.execute("UPDATE exchanges SET status='warning', last_checked=? WHERE id=?",
+                   (now, exchange_id))
+        db.commit()
+        if partner and partner["email"]:
+            send_mail(
+                partner["email"],
+                f"⚠️ Link Removal Warning – {my_site['site_name'] if my_site else 'Partner'}",
+                f"""<!DOCTYPE html>
+<html><body style="margin:0;padding:0;background:#f4f6fb;font-family:Arial,sans-serif">
+<center style="width:100%">
+<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#f4f6fb;padding:24px 0">
+<tr><td align="center">
+<table role="presentation" width="600" cellspacing="0" cellpadding="0" border="0" style="max-width:600px;width:100%">
+  <tr>
+    <td align="center" style="background:linear-gradient(135deg,#b8860b 0%,#e6a700 55%,#ff8c00 100%);border-radius:16px 16px 0 0;padding:32px 24px">
+      <div style="font-size:40px;line-height:1">⚠️</div>
+      <h1 style="color:#ffffff;margin:12px 0 6px;font-size:22px;font-weight:800;font-family:Arial,sans-serif">Your Link Was Removed</h1>
+      <p style="color:rgba(255,255,255,.95);margin:0;font-size:14px;font-family:Arial,sans-serif">Automatic check detected a problem</p>
+    </td>
+  </tr>
+  <tr>
+    <td style="background:#ffffff;border-radius:0 0 16px 16px;padding:28px 24px">
+      <p style="font-size:14px;color:#3a4a63;line-height:1.7;margin:0 0 20px;font-family:Arial,sans-serif">
+        Our system checked your exchange with <b>{my_site['site_name'] if my_site else '?'}</b> and your link could not be reached:
+      </p>
+      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#fdecea;border:1px solid #f5c6c0;border-radius:10px;margin-bottom:20px">
+        <tr><td style="padding:14px 18px;font-size:13px;color:#d32f2f;word-break:break-all;font-family:monospace">{ex['partner_link'] or '—'}</td></tr>
+      </table>
+      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#fff8e6;border:1px solid #ffe4a1;border-radius:10px;margin-bottom:20px">
+        <tr><td style="padding:14px 18px;font-size:13px;color:#7a6500;line-height:1.6;font-family:Arial,sans-serif">💡 <b>What to do:</b> Please restore the link on your site, or contact your partner to resolve this. If the link is live, ignore this message — the check may have hit a temporary issue.</td></tr>
+      </table>
+      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="border-top:1px solid #eef1f7">
+        <tr><td align="center" style="padding-top:16px">
+          <p style="font-size:12px;color:#8a97ad;margin:0;font-family:Arial,sans-serif">Sent via <b style="color:#2f7cf6">TWH Link Exchange Directory</b></p>
+        </td></tr>
+      </table>
+    </td>
+  </tr>
+</table>
+</td></tr>
+</table>
+</center>
+</body></html>""")
+            warned = True
+    else:
+        db.execute("UPDATE exchanges SET last_checked=? WHERE id=?", (now, exchange_id))
+        db.commit()
+
+    status = "ok"
+    if my_link_ok is False:
+        status = "myremoved"   # user's link on partner site gone
+    elif partner_link_ok is False:
+        status = "partnerremoved"
+    return redirect(url_for("tracking", msg=status, warned="1" if warned else "0"))
 
 
 @app.route("/my-exchange/<int:exchange_id>/done", methods=["POST"])

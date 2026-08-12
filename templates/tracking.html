@@ -38,12 +38,22 @@
         </div>
         {% if ex.status != 'done' %}
         <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
+          <form method="post" action="{{ url_for('my_exchange_check_links', exchange_id=ex.id) }}" style="display:inline">
+            <button class="btn btn-primary btn-sm" type="submit"><i class="fa-solid fa-circle-check"></i> Check Links</button>
+          </form>
           <form method="post" action="{{ url_for('my_exchange_done', exchange_id=ex.id) }}" style="display:inline">
-            <button class="btn btn-primary btn-sm" type="submit"><i class="fa-solid fa-circle-check"></i> Mark Done</button>
+            <button class="btn btn-primary btn-outline btn-sm" type="submit"><i class="fa-solid fa-flag-checkered"></i> Mark Done</button>
           </form>
           <form method="post" action="{{ url_for('my_exchange_report_removed', exchange_id=ex.id) }}" style="display:inline" onsubmit="return confirm('Send a removal warning email to {{ ex._partner_name }}?')">
             <button class="btn btn-primary btn-outline btn-sm" type="submit"><i class="fa-solid fa-triangle-exclamation"></i> Report Link Removed</button>
           </form>
+        </div>
+        {% endif %}
+        {% if ex.my_link or ex.partner_link %}
+        <div style="margin-top:12px;padding-top:10px;border-top:1px dashed var(--border,#e3e8f2);font-size:.75rem;color:var(--muted,#5a6b85);display:flex;flex-direction:column;gap:4px">
+          <div><i class="fa-solid fa-arrow-up-right-from-square"></i> <b>Your link on partner site:</b> <a href="https://{{ ex.my_link.replace('https://','').replace('http://','') }}" target="_blank" style="color:var(--accent,#2f7cf6);word-break:break-all">{{ ex.my_link }}</a></div>
+          <div><i class="fa-solid fa-arrow-down-left"></i> <b>Partner's link on your site:</b> <a href="https://{{ ex.partner_link.replace('https://','').replace('http://','') }}" target="_blank" style="color:var(--accent,#2f7cf6);word-break:break-all">{{ ex.partner_link }}</a></div>
+          {% if ex.last_checked %}<div style="font-size:.7rem;color:var(--muted,#aab4c6)">Last checked: {{ ex.last_checked[:16].replace('T',' ') }}</div>{% endif %}
         </div>
         {% endif %}
       </div>
@@ -75,6 +85,14 @@
           <option value="{{ p.id }}">{{ p.site_name }} ({{ p.site_url }}) · DR {{ p.dr or '—' }}</option>
           {% endfor %}
         </select>
+      </div>
+      <div class="form-group">
+        <label class="field-label">Your Link on Partner's Site (URL you placed)</label>
+        <input class="form-control" name="my_link" placeholder="https://partnersite.com/your-page (the link you placed there)">
+      </div>
+      <div class="form-group">
+        <label class="field-label">Partner's Link on Your Site (URL they placed)</label>
+        <input class="form-control" name="partner_link" placeholder="https://yoursite.com/partner-page (the link they placed on your site)">
       </div>
       <div class="form-group">
         <label class="field-label">Note (optional)</label>
