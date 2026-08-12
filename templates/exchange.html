@@ -33,6 +33,27 @@
     {% endif %}
 
     <form method="post" style="display:flex;flex-direction:column;gap:4px">
+      <script>
+        // update draft message when user switches their site
+        document.addEventListener('DOMContentLoaded', function () {
+          var sel = document.querySelector('select[name="your_site"]');
+          var msg = document.getElementById('exMessage');
+          if (!sel || !msg || !msg.value.trim()) return;
+          var original = msg.value;
+          var userEdited = false;
+          msg.addEventListener('input', function () { userEdited = true; });
+          sel.addEventListener('change', function () {
+            if (userEdited) return; // respect user's edits
+            var opt = sel.options[sel.selectedIndex];
+            if (!opt) return;
+            var siteName = opt.textContent.split(' (')[0].trim();
+            msg.value = original.replace(
+              /^I run .*?, and I'd love to do a link exchange/m,
+              'I run ' + siteName + ', and I\'d love to do a link exchange'
+            );
+          });
+        });
+      </script>
       {% if user_email %}
       <input type="hidden" name="your_name" value="">
       <input type="hidden" name="your_email" value="{{ user_email }}">
@@ -64,7 +85,14 @@
       {% endif %}
       <div class="form-group">
         <label class="field-label">Message (what links do you want to exchange?)</label>
-        <textarea class="form-control" name="message" rows="4" required placeholder="Hi! I run a tech blog with DR 25. I'd like to exchange a homepage link with you..."></textarea>
+        <textarea class="form-control" name="message" id="exMessage" rows="5" required placeholder="Hi! I run a tech blog with DR 25. I'd like to exchange a homepage link with you...">{% if user_sites %}Hi {{ site.site_name }} team,
+
+I run {{ user_sites[0].site_name }}{% if user_sites[0].dr %} (DR {{ user_sites[0].dr }}){% endif %}, and I'd love to do a link exchange with you. Our sites are relevant, and I believe both our audiences would benefit from the swap.
+
+If you're interested, I'll add your link to my site and you can add mine to yours. Let me know what works best for you!
+
+Thanks{% endif %}</textarea>
+        {% if user_sites %}<p class="form-note" style="margin-top:4px"><i class="fa-solid fa-pen"></i> This is a draft — feel free to edit it before sending.</p>{% endif %}
       </div>
       <button class="btn btn-primary btn-block btn-lg" type="submit"><i class="fa-solid fa-paper-plane"></i> Send Exchange Request — Free</button>
     </form>
