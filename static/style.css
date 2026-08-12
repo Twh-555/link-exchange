@@ -2034,3 +2034,11 @@ textarea.form-control {
 /* logged-in users see site names (no blur) - higher specificity to beat .locked rule */
 .directory-wrap .site-name-lock.unlocked { filter: none; pointer-events: auto; user-select: auto; cursor: pointer; }
 .directory-wrap.locked .site-name-lock.unlocked { filter: none; pointer-events: auto; user-select: auto; cursor: pointer; }
+
+/* message count badge in user dropdown */
+.user-dd-badge {
+  margin-left: auto; background: #d32f2f; color: #fff;
+  font-size: .68rem; font-weight: 800; min-width: 18px; height: 18px;
+  border-radius: 50px; display: inline-flex; align-items: center; justify-content: center;
+  padding: 0 5px;
+}

@@ -62,6 +62,7 @@ def inject_user():
     user_email = session.get("user_email", "")
     user_name = ""
     user_sites = []
+    msg_count = 0
     if user_email:
         db = get_db()
         user_sites = db.execute(
@@ -69,8 +70,16 @@ def inject_user():
             (user_email,)).fetchall()
         if user_sites:
             user_name = user_sites[0]["site_name"]
+        # count incoming exchange requests (new/pending) for user's sites
+        ids = [s["id"] for s in db.execute(
+            "SELECT id FROM sites WHERE email=?", (user_email,)).fetchall()]
+        if ids:
+            placeholders = ",".join("?" for _ in ids)
+            msg_count = db.execute(
+                f"SELECT COUNT(*) FROM exchanges WHERE to_site_id IN ({placeholders}) AND status != 'done'",
+                ids).fetchone()[0]
     return dict(user_email=user_email, user_name=user_name,
-                user_sites_list=user_sites)
+                user_sites_list=user_sites, msg_count=msg_count)
 
 ADMIN_USERNAME = os.environ.get("ADMIN_USERNAME", "admin")
 ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "twh@linkexchange")
