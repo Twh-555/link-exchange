@@ -9,44 +9,100 @@
 <div style="max-width:720px;margin:16px auto 0;background:#f0faf4;border:1px solid #bfe8cd;border-radius:10px;padding:12px 16px;font-size:.9rem;color:#0a7a3d">{{ notice }}</div>
 {% endif %}
 
-<!-- Incoming Exchange Requests -->
+<!-- Incoming Exchange Requests (count only, click -> messages) -->
 <section class="seo-content-section" id="requests" style="max-width:720px;margin:28px auto 0;scroll-margin-top:90px">
   <div class="content-article">
-    <h2><i class="fa-solid fa-inbox"></i> Incoming Exchange Requests ({{ requests|length }})</h2>
-    {% if requests %}
-    <div style="display:flex;flex-direction:column;gap:14px;margin-top:14px">
-      {% for r in requests %}
-      <a href="{{ url_for('messages') }}" style="text-decoration:none;color:inherit;display:block">
-      <div style="background:#fff;border:1px solid var(--border,#e3e8f2);border-radius:12px;padding:16px 18px;transition:box-shadow .15s,border-color .15s">
+    <a href="{{ url_for('messages') }}" style="text-decoration:none;color:inherit;display:block">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;background:#fff;border:1px solid var(--border,#e3e8f2);border-radius:12px;padding:18px 20px;transition:box-shadow .15s,border-color .15s">
+        <div style="display:flex;align-items:center;gap:12px">
+          <div style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#2f7cf6,#6c5ce7);color:#fff;font-size:1rem;display:flex;align-items:center;justify-content:center"><i class="fa-solid fa-inbox"></i></div>
+          <div>
+            <div style="font-weight:800;font-size:.95rem;color:var(--dark,#0f1b33)">Incoming Exchange Requests</div>
+            <div style="font-size:.75rem;color:var(--muted,#8a97ad)">Click to view all messages</div>
+          </div>
+        </div>
+        <span style="font-size:1rem;font-weight:800;padding:6px 14px;border-radius:50px;
+          {% if requests %}background:#fff8e6;color:#b8860b{% else %}background:#eef1f7;color:#8a97ad{% endif %}">
+          {{ requests|length }}
+        </span>
+      </div>
+    </a>
+  </div>
+</section>
+
+<!-- My Sites -->
+<h2 style="max-width:720px;margin:36px auto 0;font-size:1.25rem"><i class="fa-solid fa-globe"></i> My Sites</h2>
+
+<div class="directory-grid" style="margin-top:24px">
+  {% for s in sites %}
+  <div class="site-card">
+    <div class="site-card-top">
+      <h3><a href="{{ s.site_url }}" target="_blank">{{ s.site_name }}</a></h3>
+    </div>
+    <p class="desc">{{ s.description[:100] }}</p>
+    <div class="site-meta">
+      <span class="badge-tag tag-dr">DR {{ s.dr }}</span>
+      <span class="badge-tag tag-da">DA {{ s.da }}</span>
+      {% if s.traffic %}<span class="badge-tag tag-traffic"><i class="fa-solid fa-chart-line"></i> {{ s.traffic }}</span>{% endif %}
+      {% if s.status == 'active' %}
+      <span class="badge-tag" style="background:#e8f5e9;color:#0a7a3d">✅ Approved</span>
+      {% elif s.status == 'rejected' %}
+      <span class="badge-tag" style="background:#fdecea;color:#d32f2f">❌ Rejected</span>
+      {% else %}
+      <span class="badge-tag" style="background:#fff8e6;color:#b8860b">⏳ Pending</span>
+      {% endif %}
+    </div>
+    <div class="site-actions" style="margin-top:12px">
+      <a class="btn btn-primary btn-sm" href="{{ url_for('status_page', token=s.token) }}"><i class="fa-solid fa-eye"></i> View Status</a>
+      <a class="btn btn-primary btn-outline btn-sm" href="{{ url_for('edit_site', site_id=s.id) }}"><i class="fa-solid fa-pen"></i> Edit</a>
+      <a class="btn btn-primary btn-outline btn-sm" href="{{ url_for('directory') }}"><i class="fa-solid fa-layer-group"></i> Directory</a>
+    </div>
+  </div>
+  {% else %}
+  <div class="empty-state" style="grid-column:1/-1">
+    <i class="fa-solid fa-inbox"></i>
+    <p>No listings yet — <a href="{{ url_for('submit') }}">add your site</a>!</p>
+  </div>
+  {% endfor %}
+</div>
+
+<!-- My Exchanges (sent requests tracking) -->
+<section class="seo-content-section" id="exchanges" style="max-width:720px;margin:32px auto 0;scroll-margin-top:90px">
+  <div class="content-article">
+    <h2><i class="fa-solid fa-arrow-right-arrow-left"></i> My Exchanges ({{ outgoing|length }})</h2>
+    {% if outgoing %}
+    <div style="display:flex;flex-direction:column;gap:12px;margin-top:14px">
+      {% for ex in outgoing %}
+      <div style="background:#fff;border:1px solid var(--border,#e3e8f2);border-radius:12px;padding:14px 16px">
         <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
-          <div style="display:flex;align-items:center;gap:10px">
-            <div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#2f7cf6,#6c5ce7);color:#fff;font-weight:800;display:flex;align-items:center;justify-content:center;font-size:.9rem">{{ (r._from_name or r._from_site or '?')[0]|upper }}</div>
-            <div>
-              <div style="font-weight:700;font-size:.88rem;color:var(--dark,#0f1b33)">{{ r._from_name or 'Anonymous' }}</div>
-              <div style="font-size:.75rem;color:var(--muted,#8a97ad)">
-                {% if r._from_site %}{{ r._from_site }}{% endif %}
-              </div>
+          <div>
+            <div style="font-weight:700;font-size:.88rem;color:var(--dark,#0f1b33)">
+              {{ ex._partner_name }} <span style="font-weight:400;color:var(--muted,#8a97ad);font-size:.75rem">(DR {{ ex._partner_dr or '—' }})</span>
             </div>
+            <div style="font-size:.75rem;color:var(--muted,#8a97ad)">{{ ex._partner_url }} · sent {{ ex.created_at[:10] }}</div>
           </div>
           <span style="font-size:.7rem;font-weight:700;padding:4px 10px;border-radius:50px;
-            {% if r.status == 'done' %}background:#e8f5e9;color:#0a7a3d{% else %}background:#fff8e6;color:#b8860b{% endif %}">
-            {% if r.status == 'done' %}✅ Done{% else %}⏳ New{% endif %}
+            {% if ex.status == 'done' %}background:#e8f5e9;color:#0a7a3d
+            {% elif ex.status == 'warning' %}background:#fff3e0;color:#e65100
+            {% else %}background:#fff8e6;color:#b8860b{% endif %}">
+            {% if ex.status == 'done' %}✅ Done{% elif ex.status == 'warning' %}⚠️ Warning Sent{% else %}⏳ Pending{% endif %}
           </span>
         </div>
-        <div style="font-size:.85rem;color:#3a4a63;line-height:1.7;margin:12px 0 0;white-space:pre-line">{{ (r._body or r.message)[:140] }}{% if (r._body or r.message)|length > 140 %}...{% endif %}</div>
-        <div style="display:flex;gap:10px;align-items:center;justify-content:space-between;margin-top:12px;flex-wrap:wrap">
-          <span style="font-size:.72rem;color:var(--muted,#aab4c6)">Requested for <b>{{ r._site_name }}</b> · {{ r.created_at[:10] }}</span>
-          <span class="btn btn-primary btn-outline btn-sm" style="pointer-events:none"><i class="fa-solid fa-arrow-right"></i> Open</span>
+        {% if ex.status != 'done' %}
+        <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
+          <form method="post" action="{{ url_for('my_exchange_done', exchange_id=ex.id) }}" style="display:inline">
+            <button class="btn btn-primary btn-sm" type="submit" title="Both links are live now"><i class="fa-solid fa-circle-check"></i> Mark Done</button>
+          </form>
+          <form method="post" action="{{ url_for('my_exchange_report_removed', exchange_id=ex.id) }}" style="display:inline" onsubmit="return confirm('Send a removal warning email to {{ ex._partner_name }}?')">
+            <button class="btn btn-primary btn-outline btn-sm" type="submit" title="Partner removed your link"><i class="fa-solid fa-triangle-exclamation"></i> Report Link Removed</button>
+          </form>
         </div>
+        {% endif %}
       </div>
-      </a>
       {% endfor %}
     </div>
     {% else %}
-    <p style="color:var(--muted,#5a6b85)">
-      No exchange requests yet. Once your site is approved, other site owners can send you requests —
-      they'll appear here.
-    </p>
+    <p style="color:var(--muted,#5a6b85)">No exchanges yet — <a href="{{ url_for('directory') }}">find a partner</a> and send your first request!</p>
     {% endif %}
   </div>
 </section>
