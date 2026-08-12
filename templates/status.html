@@ -19,7 +19,7 @@
     </div>
     <h2 style="color:#0a7a3d;margin-bottom:8px">✅ Approved & Live!</h2>
     <p style="color:var(--muted,#5a6b85);line-height:1.7">
-      Your site is now listed in the <a href="{{ site_url }}/link-exchange/">link exchange directory</a>.
+      Your site is now listed in the <a href="{{ site_url }}/link-exchange/directory">link exchange directory</a>.
       Other site owners can send you exchange requests at <b>{{ site.email }}</b>.
     </p>
     {% elif site.status == 'rejected' %}
@@ -54,7 +54,7 @@
     </div>
 
     <div style="margin-top:20px">
-      <a class="btn btn-primary" href="{{ site_url }}/link-exchange/"><i class="fa-solid fa-layer-group"></i> Browse Directory</a>
+      <a class="btn btn-primary" href="{{ site_url }}/link-exchange/directory"><i class="fa-solid fa-layer-group"></i> Browse Directory</a>
     </div>
   </div>
 </div>
@@ -71,7 +71,7 @@
     </p>
     <div style="margin-top:20px">
       <a class="btn btn-primary" href="{{ url_for('submit') }}"><i class="fa-solid fa-plus"></i> Add Your Site</a>
-      <a class="btn btn-primary btn-outline" href="{{ site_url }}/link-exchange/"><i class="fa-solid fa-layer-group"></i> Browse Directory</a>
+      <a class="btn btn-primary btn-outline" href="{{ site_url }}/link-exchange/directory"><i class="fa-solid fa-layer-group"></i> Browse Directory</a>
     </div>
   </div>
 </div>
