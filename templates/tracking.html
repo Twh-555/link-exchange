@@ -74,23 +74,6 @@
     {% if sites %}
     <form method="post" style="display:flex;flex-direction:column;gap:12px">
       <div class="form-group">
-        <label class="field-label">Your Site</label>
-        <select class="form-control" name="my_site_id" required>
-          {% for s in sites %}
-          <option value="{{ s.id }}">{{ s.site_name }} ({{ s.site_url }})</option>
-          {% endfor %}
-        </select>
-      </div>
-      <div class="form-group">
-        <label class="field-label">Partner Site (who you exchanged with)</label>
-        <select class="form-control" name="partner_site_id" required>
-          <option value="">Select partner site...</option>
-          {% for p in partners %}
-          <option value="{{ p.id }}">{{ p.site_name }} ({{ p.site_url }}) · DR {{ p.dr or '—' }}</option>
-          {% endfor %}
-        </select>
-      </div>
-      <div class="form-group">
         <label class="field-label">Your Link (URL you gave partner to link to)</label>
         <input class="form-control" name="my_link" placeholder="https://yoursite.com/ (target URL of YOUR link)">
       </div>

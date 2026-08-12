@@ -981,33 +981,35 @@ def tracking():
     # ADD EXCHANGE (manual record)
     if request.method == "POST":
         f = request.form
-        my_site_id = int(f.get("my_site_id") or 0)
-        partner_site_id = int(f.get("partner_site_id") or 0)
         note = f.get("note", "").strip()[:300]
         my_link = f.get("my_link", "").strip()[:300]      # link user placed ON partner's site (target)
         partner_link = f.get("partner_link", "").strip()[:300]  # link partner placed ON user's site (target)
         my_link_page = f.get("my_link_page", "").strip()[:300]      # page on partner's site with my link
         partner_link_page = f.get("partner_link_page", "").strip()[:300]  # page on my site with partner's link
-        # verify ownership of my site
-        owns = db.execute(
-            "SELECT 1 FROM sites WHERE id=? AND email=?",
-            (my_site_id, session["user_email"])).fetchone()
-        partner = db.execute("SELECT site_name, site_url FROM sites WHERE id=?", (partner_site_id,)).fetchone()
-        if not owns:
-            msg, ok = "❌ Please select one of YOUR sites.", False
-        elif not partner:
-            msg, ok = "❌ Please select a partner site.", False
+        if not sites:
+            msg, ok = "❌ You need at least one listed site first.", False
+        elif not my_link or not partner_link:
+            msg, ok = "❌ Please fill both link URLs (your link + partner's link).", False
         else:
-            my_site = db.execute("SELECT site_name, site_url, email FROM sites WHERE id=?", (my_site_id,)).fetchone()
+            my_site = sites[0]  # first of user's sites
+            # try to match partner from their link URL against directory
+            partner_site_id = 0
+            partner_row = db.execute(
+                "SELECT id, site_name, site_url FROM sites WHERE status='active' ORDER BY dr DESC").fetchall()
+            pl = normalize_url(partner_link)
+            for pr in partner_row:
+                if pl and (normalize_url(pr["site_url"]) in pl or pl in normalize_url(pr["site_url"])):
+                    partner_site_id = pr["id"]
+                    break
             db.execute(
                 "INSERT INTO exchanges (from_site_id, to_site_id, message, status, created_at, my_link, partner_link, my_link_page, partner_link_page)"
                 " VALUES (?,?,?, 'pending', ?, ?, ?, ?, ?)",
-                (my_site_id, partner_site_id,
+                (my_site["id"], partner_site_id,
                  f"{my_site['site_name']} | {my_site['email']} | {my_site['site_url']}: "
                  f"[Exchange recorded manually] {note}",
                  datetime.utcnow().isoformat(), my_link, partner_link, my_link_page, partner_link_page))
             db.commit()
-            msg, ok = f"✅ Exchange with {partner['site_name']} recorded! Links saved — use Check Links to verify they're live.", True
+            msg, ok = f"✅ Exchange recorded! Links saved — use Check Links to verify they're live.", True
 
     # exchanges list
     outgoing = []
@@ -1020,10 +1022,22 @@ def tracking():
             partner = db.execute(
                 "SELECT site_name, site_url, email, dr FROM sites WHERE id=?",
                 (ex["to_site_id"],)).fetchone()
-            ed["_partner_name"] = partner["site_name"] if partner else "?"
-            ed["_partner_url"] = partner["site_url"] if partner else "?"
-            ed["_partner_email"] = partner["email"] if partner else ""
-            ed["_partner_dr"] = partner["dr"] if partner else 0
+            if partner:
+                ed["_partner_name"] = partner["site_name"]
+                ed["_partner_url"] = partner["site_url"]
+                ed["_partner_email"] = partner["email"]
+                ed["_partner_dr"] = partner["dr"]
+            else:
+                # no directory match -> derive from partner link URL
+                from urllib.parse import urlparse
+                try:
+                    pdom = urlparse(ex["partner_link"] if ex["partner_link"].startswith("http") else "https://" + ex["partner_link"]).netloc
+                except Exception:
+                    pdom = ""
+                ed["_partner_name"] = (pdom or "Partner").replace("www.", "")
+                ed["_partner_url"] = ex["partner_link"] or ""
+                ed["_partner_email"] = ""
+                ed["_partner_dr"] = 0
             outgoing.append(ed)
     # check result message
     check_msg = request.args.get("msg", "")
