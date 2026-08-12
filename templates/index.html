@@ -148,12 +148,9 @@
   {% if sites|length > 9 %}
   <div id="loadMoreWrap" style="text-align:center;margin:24px 0 8px">
     <button id="loadMoreBtn" class="btn btn-primary btn-outline" type="button">
-      <i class="fa-solid fa-arrow-down"></i> Show More Sites ({{ sites|length - 9 }} more)
+      <i class="fa-solid fa-arrow-down"></i> Show More Sites
     </button>
   </div>
-  <p id="dirCount" style="text-align:center;color:var(--muted,#5a6b85);font-size:.8rem;margin:8px 0 0">
-    Showing <span id="shownCount">9</span> of {{ sites|length }} sites
-  </p>
   {% endif %}
 </div>
 
@@ -337,8 +334,6 @@
     const lm = document.getElementById('loadMoreWrap');
     if (searching) {
       if (lm) lm.style.display = 'none';
-      const sc = document.getElementById('shownCount');
-      if (sc) sc.textContent = visible;
     } else {
       // restore pagination: hide beyond current page
       const cards = [...document.querySelectorAll('#grid .site-card')];
@@ -352,8 +347,6 @@
           if (i >= 9) { c.style.display = 'none'; }
         });
         lm.style.display = 'block';
-        const sc = document.getElementById('shownCount');
-        if (sc) sc.textContent = 9;
       }
     }
     // show "add your site" prompt when nothing matches
@@ -373,7 +366,6 @@
     if (cards.length <= PAGE) return;
     const btnWrap = document.getElementById('loadMoreWrap');
     const btn = document.getElementById('loadMoreBtn');
-    const shownEl = document.getElementById('shownCount');
     let visible = PAGE;
     // hide beyond first page
     cards.forEach((c, i) => { if (i >= PAGE) c.style.display = 'none'; });
@@ -386,7 +378,6 @@
         revealed++;
         visible = i + 1;
       }
-      if (shownEl) shownEl.textContent = visible;
       if (visible >= cards.length && btnWrap) btnWrap.style.display = 'none';
     }
     if (btn) btn.addEventListener('click', showMore);
