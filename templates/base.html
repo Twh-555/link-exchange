@@ -49,6 +49,37 @@
     });
   });
 
+  // ===== Mobile nav toggle (hamburger) =====
+  document.addEventListener('DOMContentLoaded', function () {
+    var toggle = document.getElementById('mobileMenuToggle');
+    var navLinks = document.getElementById('mainNavLinks');
+    if (!toggle || !navLinks) return;
+    toggle.addEventListener('click', function (e) {
+      e.stopPropagation();
+      navLinks.classList.toggle('active');
+      // swap bars / x icon
+      var icon = toggle.querySelector('i');
+      if (icon) icon.className = navLinks.classList.contains('active')
+        ? 'fa-solid fa-xmark' : 'fa-solid fa-bars';
+    });
+    // close when clicking a link inside the mobile menu
+    navLinks.querySelectorAll('a').forEach(function (a) {
+      a.addEventListener('click', function () {
+        navLinks.classList.remove('active');
+        var icon = toggle.querySelector('i');
+        if (icon) icon.className = 'fa-solid fa-bars';
+      });
+    });
+    // close when clicking outside
+    document.addEventListener('click', function (e) {
+      if (!toggle.contains(e.target) && !navLinks.contains(e.target)) {
+        navLinks.classList.remove('active');
+        var icon = toggle.querySelector('i');
+        if (icon) icon.className = 'fa-solid fa-bars';
+      }
+    });
+  });
+
   // ===== FAQ accordion (click to expand/collapse) =====
   document.addEventListener('DOMContentLoaded', function () {
     document.querySelectorAll('.faq-item .faq-question').forEach(function (q) {
