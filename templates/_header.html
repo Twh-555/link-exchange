@@ -85,11 +85,11 @@
         <div class="nav-actions">
           {% if user_email %}
           <div class="user-menu" id="userMenu">
-            <a class="user-menu-btn" href="{{ url_for('profile') }}" aria-expanded="false">
+            <button class="user-menu-btn" type="button" aria-expanded="false">
               <span class="user-avatar">{{ (user_name or user_email)[0]|upper }}</span>
               <span class="user-menu-label">{{ user_name or user_email.split('@')[0] }}</span>
-              <i class="fa-solid fa-chevron-down user-caret" onclick="event.preventDefault();event.stopPropagation();document.getElementById('userMenu').classList.toggle('open')"></i>
-            </a>
+              <i class="fa-solid fa-chevron-down user-caret"></i>
+            </button>
             <div class="user-dropdown" id="userDropdown">
               <a class="user-dropdown-head" href="{{ url_for('profile') }}">
                 <div class="user-avatar-lg">{{ (user_name or user_email)[0]|upper }}</div>
