@@ -54,7 +54,6 @@
       {% for n in (s.niche or '').split(', ') %}
         {% if n %}<span class="badge-tag tag-niche">{{ n }}</span>{% endif %}
       {% endfor %}
-      <span class="badge-tag tag-free">Link Exchange</span>
     </div>
 
     <p class="desc" style="font-size:1rem;color:var(--muted,#5a6b85);line-height:1.7">{{ s.description }}</p>
