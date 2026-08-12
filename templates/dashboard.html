@@ -64,7 +64,7 @@
     <div class="site-card-top">
       <h3><a href="{{ s.site_url }}" target="_blank">{{ s.site_name }}</a></h3>
     </div>
-    <p class="desc">{{ s.description[:100] if s.description else "A " + (s.niche.split(", ")[0] if s.niche else "website") + " website looking for link exchange partners — free reciprocal backlinks, no signup required." }}</p>
+    <p class="desc">{{ s.description[:100] }}</p>
     <div class="site-meta">
       <span class="badge-tag tag-dr">DR {{ s.dr }}</span>
       <span class="badge-tag tag-da">DA {{ s.da }}</span>
