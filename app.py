@@ -169,7 +169,8 @@ CREATE TABLE IF NOT EXISTS sites (
     verify_expires TEXT DEFAULT '',
     owner_verified INTEGER DEFAULT 0,
     created_at TEXT NOT NULL,
-    approved_at TEXT
+    approved_at TEXT,
+    notify INTEGER DEFAULT 1       -- 1 = send exchange emails, 0 = imported/legacy, no emails
 );
 CREATE TABLE IF NOT EXISTS exchanges (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -209,6 +210,11 @@ def get_db():
             g.db.execute("ALTER TABLE sites ADD COLUMN verify_token TEXT DEFAULT ''")
         if "owner_verified" not in cols:
             g.db.execute("ALTER TABLE sites ADD COLUMN owner_verified INTEGER DEFAULT 0")
+        if "notify" not in cols:
+            g.db.execute("ALTER TABLE sites ADD COLUMN notify INTEGER DEFAULT 1")
+            # existing (pre-flag) sites are legacy/imported -> no emails from us
+            g.db.execute("UPDATE sites SET notify=0 WHERE notify=1")
+            g.db.commit()
         # exchanges migration: my_link/partner_link/last_checked
         ecols = [r[1] for r in g.db.execute("PRAGMA table_info(exchanges)").fetchall()]
         if "my_link" not in ecols:
@@ -1108,9 +1114,9 @@ def exchange(site_id):
             (from_site_id, site_id, f"{your_name} | {your_email} | {your_site}: {message}",
              datetime.utcnow().isoformat()))
         db.commit()
-        # email notification to site owner
+        # email notification to site owner (only if owner opted in / not legacy import)
         mail_ok, mail_err = False, ""
-        if site["email"] and your_email:
+        if site["email"] and your_email and site["notify"]:
             mail_ok, mail_err = send_mail(
                 site["email"],
                 f"🔗 New Link Exchange Request – {site['site_name']}",
@@ -1289,8 +1295,8 @@ def admin_approve(site_id):
     db.execute("UPDATE sites SET status='active', approved_at=? WHERE id=?",
                (datetime.utcnow().isoformat(), site_id))
     db.commit()
-    # notify owner: your site is LIVE!
-    if site and site["email"]:
+    # notify owner: your site is LIVE! (skip legacy/imported sites)
+    if site and site["email"] and site["notify"]:
         live_url = f"{SITE_URL}/link-exchange/"
         send_mail(
             site["email"],
@@ -1382,7 +1388,7 @@ def my_exchange_check_links(exchange_id):
     warned = False
     if partner_link_ok is False:
         partner = db.execute(
-            "SELECT site_name, site_url, email FROM sites WHERE id=?",
+            "SELECT site_name, site_url, email, notify FROM sites WHERE id=?",
             (ex["to_site_id"],)).fetchone()
         my_site = db.execute(
             "SELECT site_name, site_url FROM sites WHERE id=?",
@@ -1390,7 +1396,7 @@ def my_exchange_check_links(exchange_id):
         db.execute("UPDATE exchanges SET status='warning', last_checked=? WHERE id=?",
                    (now, exchange_id))
         db.commit()
-        if partner and partner["email"]:
+        if partner and partner["email"] and partner["notify"]:
             send_mail(
                 partner["email"],
                 f"⚠️ Link Removal Warning – {my_site['site_name'] if my_site else 'Partner'}",
@@ -1478,15 +1484,15 @@ def my_exchange_report_removed(exchange_id):
     if not owns:
         return "Not authorized", 403
     partner = db.execute(
-        "SELECT site_name, site_url, email FROM sites WHERE id=?",
+        "SELECT site_name, site_url, email, notify FROM sites WHERE id=?",
         (ex["to_site_id"],)).fetchone()
     my_site = db.execute(
         "SELECT site_name, site_url FROM sites WHERE id=?",
         (ex["from_site_id"],)).fetchone()
     db.execute("UPDATE exchanges SET status='warning' WHERE id=?", (exchange_id,))
     db.commit()
-    # warning email to partner
-    if partner and partner["email"]:
+    # warning email to partner (skip legacy/imported sites)
+    if partner and partner["email"] and partner["notify"]:
         send_mail(
             partner["email"],
             f"⚠️ Link Removal Warning – {my_site['site_name'] if my_site else 'Partner'}",
