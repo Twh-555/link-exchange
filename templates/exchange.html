@@ -26,19 +26,41 @@
     <div class="msg-ok">{{ msg }}</div>
     {% endif %}
 
+    {% if user_email and not msg %}
+    <div style="background:#f0faf4;border:1px solid #bfe8cd;border-radius:10px;padding:12px 16px;margin-bottom:16px;font-size:.85rem;color:#0a7a3d">
+      <i class="fa-solid fa-circle-check"></i> Logged in as <b>{{ user_email }}</b> — we'll send the request from your account email.
+    </div>
+    {% endif %}
+
     <form method="post" style="display:flex;flex-direction:column;gap:4px">
       <div class="form-group">
         <label class="field-label">Your Name</label>
         <input class="form-control" name="your_name" required>
       </div>
+      {% if user_email %}
+      <input type="hidden" name="your_email" value="{{ user_email }}">
+      {% else %}
       <div class="form-group">
         <label class="field-label">Your Email</label>
         <input class="form-control" type="email" name="your_email" required>
       </div>
+      {% endif %}
+      {% if user_sites %}
+      <div class="form-group">
+        <label class="field-label">Your Website</label>
+        <select class="form-control" name="your_site" required>
+          {% for s in user_sites %}
+          <option value="{{ s.site_url }}">{{ s.site_name }} ({{ s.site_url }})</option>
+          {% endfor %}
+        </select>
+        <p class="form-note" style="margin-top:4px"><i class="fa-solid fa-circle-info"></i> Select the site you want to exchange a link from.</p>
+      </div>
+      {% else %}
       <div class="form-group">
         <label class="field-label">Your Website</label>
         <input class="form-control" name="your_site" required placeholder="yoursite.com">
       </div>
+      {% endif %}
       <div class="form-group">
         <label class="field-label">Message (what links do you want to exchange?)</label>
         <textarea class="form-control" name="message" rows="4" required placeholder="Hi! I run a tech blog with DR 25. I'd like to exchange a homepage link with you..."></textarea>

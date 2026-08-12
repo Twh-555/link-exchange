@@ -791,16 +791,26 @@ def exchange(site_id):
     if not site:
         return "Site not found", 404
     msg = ""
+    user_email = session.get("user_email", "")
+    user_sites = (db.execute(
+        "SELECT * FROM sites WHERE email=? ORDER BY id DESC",
+        (user_email,)).fetchall() if user_email else [])
     if request.method == "POST":
         f = request.form
         your_name = f.get("your_name", "").strip()
-        your_email = f.get("your_email", "").strip()
+        your_email = f.get("your_email", "").strip() or user_email
         your_site = f.get("your_site", "").strip()
         message = f.get("message", "").strip()
+        # resolve from_site_id if user selected one of their sites
+        from_site_id = 0
+        for us in user_sites:
+            if us["site_url"] == your_site:
+                from_site_id = us["id"]
+                break
         db.execute(
             "INSERT INTO exchanges (from_site_id, to_site_id, message, status, created_at)"
             " VALUES (?,?,?, 'pending', ?)",
-            (0, site_id, f"{your_name} | {your_email} | {your_site}: {message}",
+            (from_site_id, site_id, f"{your_name} | {your_email} | {your_site}: {message}",
              datetime.utcnow().isoformat()))
         db.commit()
         # email notification to site owner
@@ -909,7 +919,8 @@ def exchange(site_id):
         msg = "✅ Request sent! The site owner will contact you. (For faster results, try our guest post service below.)"
         if your_email and mail_ok:
             msg = "✅ Request sent! The site owner has been notified by email and will contact you. (For faster results, try our guest post service below.)"
-    return render_template("exchange.html", site=site, msg=msg, site_url=SITE_URL)
+    return render_template("exchange.html", site=site, msg=msg, site_url=SITE_URL,
+                           user_email=user_email, user_sites=user_sites)
 
 
 @app.route("/admin")
