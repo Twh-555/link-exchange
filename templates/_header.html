@@ -81,7 +81,7 @@
           <a href="https://www.thewebhospitality.com/blog/" class="nav-link"><i class="fa-solid fa-blog"></i> Blog</a>
           {% if user_email %}
           <a href="{{ url_for('dashboard') }}" class="nav-link nav-login-mobile"><i class="fa-solid fa-gauge-high"></i> My Dashboard</a>
-          <a href="{{ url_for('dashboard') }}#requests" class="nav-link nav-login-mobile"><i class="fa-solid fa-envelope"></i> Messages / Requests{% if msg_count %} ({{ msg_count }}){% endif %}</a>
+          <a href="{{ url_for('messages') }}" class="nav-link nav-login-mobile"><i class="fa-solid fa-envelope"></i> Messages / Requests{% if msg_count %} ({{ msg_count }}){% endif %}</a>
           <a href="{{ url_for('submit') }}" class="nav-link nav-login-mobile"><i class="fa-solid fa-plus"></i> List Your Website</a>
           <a href="{{ url_for('logout') }}" class="nav-link nav-login-mobile"><i class="fa-solid fa-right-from-bracket"></i> Logout</a>
           {% else %}
@@ -113,7 +113,7 @@
               <div class="user-dd-sep"></div>
               <a class="user-dd-item" href="{{ url_for('profile') }}"><i class="fa-solid fa-user"></i> My Profile</a>
               <a class="user-dd-item" href="{{ url_for('dashboard') }}"><i class="fa-solid fa-gauge-high"></i> My Dashboard</a>
-              <a class="user-dd-item" href="{{ url_for('dashboard') }}#requests">
+              <a class="user-dd-item" href="{{ url_for('messages') }}">
                 <i class="fa-solid fa-envelope"></i> Messages / Requests
                 {% if msg_count %}<span class="user-dd-badge">{{ msg_count }}</span>{% endif %}
               </a>

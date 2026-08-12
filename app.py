@@ -854,6 +854,43 @@ def profile():
                            user_email=session["user_email"])
 
 
+@app.route("/messages")
+def messages():
+    """All exchange requests/messages for the logged-in user."""
+    if "user_email" not in session:
+        return redirect(url_for("login"))
+    db = get_db()
+    sites = db.execute(
+        "SELECT * FROM sites WHERE email=? ORDER BY id DESC",
+        (session["user_email"],)).fetchall()
+    site_ids = [s["id"] for s in sites]
+    requests = []
+    if site_ids:
+        placeholders = ",".join("?" for _ in site_ids)
+        requests = db.execute(
+            f"SELECT * FROM exchanges WHERE to_site_id IN ({placeholders}) ORDER BY id DESC",
+            site_ids).fetchall()
+    resolved = []
+    for r in requests:
+        rd = dict(r)
+        r_site = db.execute("SELECT site_name, site_url FROM sites WHERE id=?", (r["to_site_id"],)).fetchone()
+        rd["_site_name"] = r_site["site_name"] if r_site else "?"
+        rd["_site_url"] = r_site["site_url"] if r_site else "?"
+        rd["_site_id"] = r["to_site_id"]
+        m = re.match(r"^([^|]*)\|([^|]*)\|([^:]*):\s*(.*)$", r["message"] or "", re.S)
+        if m:
+            rd["_from_name"] = m.group(1).strip()
+            rd["_from_email"] = m.group(2).strip()
+            rd["_from_site"] = m.group(3).strip()
+            rd["_body"] = m.group(4).strip()
+        else:
+            rd["_from_name"] = rd["_from_email"] = rd["_from_site"] = ""
+            rd["_body"] = r["message"] or ""
+        resolved.append(rd)
+    return render_template("messages.html", requests=resolved,
+                           site_url=SITE_URL)
+
+
 @app.route("/logout")
 def logout():
     session.clear()

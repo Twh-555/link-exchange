@@ -1,0 +1,59 @@
+{% extends 'base.html' %}
+{% block title %}Messages & Requests – TWH Link Exchange{% endblock %}
+{% block canonical %}{{ site_url }}/link-exchange/messages{% endblock %}
+{% block robots %}noindex, follow{% endblock %}
+
+{% block content %}
+<section class="hero-section text-center" style="padding-bottom:8px">
+  <div class="hero-badge"><i class="fa-solid fa-envelope"></i> Messages</div>
+  <h1 class="page-title"><span class="gradient-text">Exchange Requests & Messages</span></h1>
+  <p class="page-subtitle">All requests sent to your sites — {{ requests|length }} total.</p>
+</section>
+
+<section class="seo-content-section" style="max-width:720px;margin:20px auto 0">
+  <div class="content-article">
+    {% if requests %}
+    <div style="display:flex;flex-direction:column;gap:14px;margin-top:10px">
+      {% for r in requests %}
+      <div style="background:#fff;border:1px solid var(--border,#e3e8f2);border-radius:12px;padding:16px 18px">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
+          <div style="display:flex;align-items:center;gap:10px">
+            <div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#2f7cf6,#6c5ce7);color:#fff;font-weight:800;display:flex;align-items:center;justify-content:center;font-size:.9rem">{{ (r._from_name or r._from_site or '?')[0]|upper }}</div>
+            <div>
+              <div style="font-weight:700;font-size:.88rem;color:var(--dark,#0f1b33)">{{ r._from_name or 'Anonymous' }}</div>
+              <div style="font-size:.75rem;color:var(--muted,#8a97ad)">
+                {% if r._from_site %}<a href="https://{{ r._from_site }}" target="_blank" style="color:var(--accent,#2f7cf6)">{{ r._from_site }}</a>{% endif %}
+                {% if r._from_email %} · {{ r._from_email }}{% endif %}
+              </div>
+            </div>
+          </div>
+          <span style="font-size:.7rem;font-weight:700;padding:4px 10px;border-radius:50px;
+            {% if r.status == 'done' %}background:#e8f5e9;color:#0a7a3d{% else %}background:#fff8e6;color:#b8860b{% endif %}">
+            {% if r.status == 'done' %}✅ Done{% else %}⏳ New{% endif %}
+          </span>
+        </div>
+        <div style="font-size:.85rem;color:#3a4a63;line-height:1.7;margin:12px 0 0;white-space:pre-line">{{ r._body or r.message }}</div>
+        <div style="display:flex;gap:10px;align-items:center;justify-content:space-between;margin-top:12px;flex-wrap:wrap">
+          <span style="font-size:.72rem;color:var(--muted,#aab4c6)">For <b>{{ r._site_name }}</b> · {{ r.created_at[:10] }}</span>
+          <div style="display:flex;gap:8px">
+            {% if r._from_email %}
+            <a class="btn btn-primary btn-sm" href="mailto:{{ r._from_email }}?subject=Re:%20Link%20Exchange%20with%20{{ r._site_url or r._site_name }}"><i class="fa-solid fa-reply"></i> Reply</a>
+            {% endif %}
+            <a class="btn btn-primary btn-outline btn-sm" href="{{ url_for('site_page', site_id=r._site_id) }}"><i class="fa-solid fa-eye"></i> View Site</a>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div style="text-align:center;padding:40px 20px;color:var(--muted,#5a6b85)">
+      <div style="font-size:2.5rem;margin-bottom:12px">📭</div>
+      <p style="font-size:.95rem">No messages yet. When someone sends an exchange request to your site, it will appear here.</p>
+      <div style="margin-top:18px">
+        <a class="btn btn-primary" href="{{ url_for('directory') }}"><i class="fa-solid fa-arrow-right-arrow-left"></i> Find Exchange Partners</a>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+</section>
+{% endblock %}
