@@ -21,12 +21,17 @@
   </select>
 </div>
 
-<div class="directory-wrap" id="directoryWrap">
+<div class="directory-wrap {% if not user_email %}locked{% endif %}" id="directoryWrap">
+  {% if not user_email %}
+  <div style="background:#fff8e6;border:1px solid #ffe4a1;border-radius:10px;padding:12px 16px;margin-bottom:16px;font-size:.85rem;color:#7a6500">
+    <i class="fa-solid fa-lock"></i> <b>Site names are hidden until you <a href="{{ url_for('login') }}" style="color:#2f7cf6;font-weight:700">login</a> or <a href="{{ url_for('submit') }}" style="color:#2f7cf6;font-weight:700">add your site</a>.</b> Logged-in members see all site names.
+  </div>
+  {% endif %}
   <div class="directory-grid" id="grid">
     {% for s in sites %}
     <div class="site-card" data-name="{{ s.site_name.lower() }}" data-niche="{{ s.niche }}">
       <div class="site-card-top">
-        <h3><a class="site-name-lock" href="{{ s.site_url }}" target="_blank" rel="nofollow">{{ s.site_name }}</a></h3>
+        <h3><a class="site-name-lock{% if user_email %} unlocked{% endif %}" href="{{ s.site_url }}" target="_blank" rel="nofollow">{{ s.site_name }}</a></h3>
       </div>
       <p class="desc">{{ s.description[:100] }}</p>
       <div class="site-meta">
@@ -36,7 +41,7 @@
         {% if exch_counts.get(s.site_url, 0) > 1 %}<span class="badge-tag tag-exch"><i class="fa-solid fa-users"></i> {{ exch_counts.get(s.site_url) }} Exchangers Available</span>{% endif %}
         {% if s.traffic %}<span class="badge-tag tag-traffic"><i class="fa-solid fa-chart-line"></i> {{ s.traffic }}</span>{% endif %}
         {% for n in (s.niche or '').split(', ') %}
-          {% if n %}<span class="badge-tag tag-niche">{{ n }}</span>{% endif %}
+          {% if n and loop.index <= 2 %}<span class="badge-tag tag-niche">{{ n }}</span>{% endif %}
         {% endfor %}
         <span class="badge-tag tag-free">Link Exchange</span>
       </div>
