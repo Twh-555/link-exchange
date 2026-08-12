@@ -178,9 +178,11 @@ CREATE TABLE IF NOT EXISTS exchanges (
     message TEXT DEFAULT '',
     status TEXT DEFAULT 'pending',   -- pending | contacted | done | warning
     created_at TEXT NOT NULL,
-    my_link TEXT DEFAULT '',         -- link placed BY user ON partner's site
-    partner_link TEXT DEFAULT '',    -- link placed BY partner ON user's site
-    last_checked TEXT DEFAULT ''
+    my_link TEXT DEFAULT '',         -- link placed BY user ON partner's site (target URL)
+    partner_link TEXT DEFAULT '',    -- link placed BY partner ON user's site (target URL)
+    last_checked TEXT DEFAULT '',
+    my_link_page TEXT DEFAULT '',    -- page ON partner's site where my link is placed
+    partner_link_page TEXT DEFAULT '' -- page ON user's site where partner's link is placed
 );
 """
 
@@ -212,6 +214,9 @@ def get_db():
             g.db.execute("ALTER TABLE exchanges ADD COLUMN my_link TEXT DEFAULT ''")
             g.db.execute("ALTER TABLE exchanges ADD COLUMN partner_link TEXT DEFAULT ''")
             g.db.execute("ALTER TABLE exchanges ADD COLUMN last_checked TEXT DEFAULT ''")
+        if "my_link_page" not in ecols:
+            g.db.execute("ALTER TABLE exchanges ADD COLUMN my_link_page TEXT DEFAULT ''")
+            g.db.execute("ALTER TABLE exchanges ADD COLUMN partner_link_page TEXT DEFAULT ''")
         g.db.commit()
     return g.db
 
@@ -233,40 +238,45 @@ def normalize_url(url: str) -> str:
     return url
 
 
-def check_link_live(link_url: str) -> bool:
-    """Check if a placed backlink is still live on the page.
-    Returns True if page reachable AND the link URL is present in page content.
-    Returns False if page is gone OR the link was removed from the page."""
-    if not link_url:
+def check_anchor_live(page_url: str, target_url: str) -> bool:
+    """Check if target link (anchor) is present ON a page.
+    Fetches page_url and looks for target_url/domain inside it.
+    Returns True if the anchor link is found, False if removed, None if no data."""
+    if not page_url or not target_url:
         return None
-    url = link_url if link_url.startswith("http") else "https://" + link_url
+    url = page_url if page_url.startswith("http") else "https://" + page_url
     try:
         r = requests.get(url, timeout=20,
                          headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36",
                                   "Accept": "text/html,application/xhtml+xml,*/*;q=0.8",
                                   "Accept-Language": "en-US,en;q=0.9"})
         if r.status_code >= 400:
-            return False
-        # if page can't be parsed as text, fall back to reachability only
+            return False  # page itself gone
         ctype = (r.headers.get("Content-Type") or "").lower()
         if "html" not in ctype and "text" not in ctype:
-            return True
+            return True  # can't parse, assume reachable
         text = r.text.lower()
-        # 1) exact URL in page
-        hay = link_url.rstrip("/").lower()
-        if hay in text:
+        # 1) exact target URL on the page
+        tgt = target_url.rstrip("/").lower()
+        if tgt in text:
             return True
-        # 2) protocol-relative //domain/path
-        if hay.startswith("https://") and hay[8:] in text:
+        if tgt.startswith("https://") and tgt[8:] in text:
             return True
-        if hay.startswith("http://") and hay[7:] in text:
+        if tgt.startswith("http://") and tgt[7:] in text:
             return True
-        # 3) domain mention (e.g. link moved to another page on same site)
+        # 2) anchor href match (regex over <a href="...">)
+        import re
         from urllib.parse import urlparse
-        domain = urlparse(url).netloc.lower().replace("www.", "")
-        if domain in text:
+        tdomain = urlparse(target_url).netloc.lower().replace("www.", "")
+        hrefs = re.findall(r'href=["\']([^"\']+)["\']', text, re.I)
+        for h in hrefs:
+            hd = urlparse(h).netloc.lower().replace("www.", "")
+            if hd and hd == tdomain:
+                return True
+        # 3) domain anywhere on the page
+        if tdomain and tdomain in text:
             return True
-        return False
+        return False  # page live but anchor link NOT found -> removed
     except Exception:
         return False
 
@@ -974,8 +984,10 @@ def tracking():
         my_site_id = int(f.get("my_site_id") or 0)
         partner_site_id = int(f.get("partner_site_id") or 0)
         note = f.get("note", "").strip()[:300]
-        my_link = f.get("my_link", "").strip()[:300]      # link user placed ON partner's site
-        partner_link = f.get("partner_link", "").strip()[:300]  # link partner placed ON user's site
+        my_link = f.get("my_link", "").strip()[:300]      # link user placed ON partner's site (target)
+        partner_link = f.get("partner_link", "").strip()[:300]  # link partner placed ON user's site (target)
+        my_link_page = f.get("my_link_page", "").strip()[:300]      # page on partner's site with my link
+        partner_link_page = f.get("partner_link_page", "").strip()[:300]  # page on my site with partner's link
         # verify ownership of my site
         owns = db.execute(
             "SELECT 1 FROM sites WHERE id=? AND email=?",
@@ -988,12 +1000,12 @@ def tracking():
         else:
             my_site = db.execute("SELECT site_name, site_url, email FROM sites WHERE id=?", (my_site_id,)).fetchone()
             db.execute(
-                "INSERT INTO exchanges (from_site_id, to_site_id, message, status, created_at, my_link, partner_link)"
-                " VALUES (?,?,?, 'pending', ?, ?, ?)",
+                "INSERT INTO exchanges (from_site_id, to_site_id, message, status, created_at, my_link, partner_link, my_link_page, partner_link_page)"
+                " VALUES (?,?,?, 'pending', ?, ?, ?, ?, ?)",
                 (my_site_id, partner_site_id,
                  f"{my_site['site_name']} | {my_site['email']} | {my_site['site_url']}: "
                  f"[Exchange recorded manually] {note}",
-                 datetime.utcnow().isoformat(), my_link, partner_link))
+                 datetime.utcnow().isoformat(), my_link, partner_link, my_link_page, partner_link_page))
             db.commit()
             msg, ok = f"✅ Exchange with {partner['site_name']} recorded! Links saved — use Check Links to verify they're live.", True
 
@@ -1339,8 +1351,8 @@ def my_exchange_check_links(exchange_id):
     if not owns:
         return "Not authorized", 403
 
-    my_link_ok = check_link_live(ex["my_link"])      # link on PARTNER's site
-    partner_link_ok = check_link_live(ex["partner_link"])  # link on USER's site
+    my_link_ok = check_anchor_live(ex["my_link_page"], ex["my_link"])
+    partner_link_ok = check_anchor_live(ex["partner_link_page"], ex["partner_link"])
     now = datetime.utcnow().isoformat()
 
     # partner's link on MY site is removed -> warning email to partner
@@ -1375,13 +1387,13 @@ def my_exchange_check_links(exchange_id):
   <tr>
     <td style="background:#ffffff;border-radius:0 0 16px 16px;padding:28px 24px">
       <p style="font-size:14px;color:#3a4a63;line-height:1.7;margin:0 0 20px;font-family:Arial,sans-serif">
-        Our system checked your exchange with <b>{my_site['site_name'] if my_site else '?'}</b> and your link could not be reached:
+        Our system checked the page <b>{ex['partner_link_page'] or '?'}</b> on your exchange with <b>{my_site['site_name'] if my_site else '?'}</b> and could not find your link there:
       </p>
       <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#fdecea;border:1px solid #f5c6c0;border-radius:10px;margin-bottom:20px">
         <tr><td style="padding:14px 18px;font-size:13px;color:#d32f2f;word-break:break-all;font-family:monospace">{ex['partner_link'] or '—'}</td></tr>
       </table>
       <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#fff8e6;border:1px solid #ffe4a1;border-radius:10px;margin-bottom:20px">
-        <tr><td style="padding:14px 18px;font-size:13px;color:#7a6500;line-height:1.6;font-family:Arial,sans-serif">💡 <b>What to do:</b> Please restore the link on your site, or contact your partner to resolve this. If the link is live, ignore this message — the check may have hit a temporary issue.</td></tr>
+        <tr><td style="padding:14px 18px;font-size:13px;color:#7a6500;line-height:1.6;font-family:Arial,sans-serif">💡 <b>What to do:</b> Please restore the link on that page, or contact your partner to resolve this. If the link is live, ignore this message — the check may have hit a temporary issue.</td></tr>
       </table>
       <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="border-top:1px solid #eef1f7">
         <tr><td align="center" style="padding-top:16px">
