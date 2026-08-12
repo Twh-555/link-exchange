@@ -1279,12 +1279,29 @@ def admin():
         "SELECT * FROM sites WHERE status='pending' ORDER BY created_at DESC").fetchall()
     exchange_list = db.execute(
         "SELECT * FROM exchanges ORDER BY id DESC LIMIT 50").fetchall()
+    all_sites = db.execute(
+        "SELECT id, site_name, site_url, email, dr, status, owner_verified FROM sites ORDER BY id DESC LIMIT 100").fetchall()
     active = db.execute("SELECT COUNT(*) n FROM sites WHERE status='active'").fetchone()["n"]
     pending = len(pending_sites)
     exchanges = db.execute("SELECT COUNT(*) n FROM exchanges").fetchone()["n"]
     return render_template("admin.html", pending_sites=pending_sites,
-                           exchange_list=exchange_list, active=active,
-                           pending=pending, exchanges=exchanges, site_url=SITE_URL)
+                           exchange_list=exchange_list, all_sites=all_sites,
+                           active=active, pending=pending, exchanges=exchanges,
+                           site_url=SITE_URL)
+
+
+@app.route("/admin/verify/<int:site_id>")
+@admin_required
+def admin_verify_owner(site_id):
+    """Toggle a site's owner_verified flag (admin marks user as verified owner)."""
+    db = get_db()
+    site = db.execute("SELECT * FROM sites WHERE id=?", (site_id,)).fetchone()
+    if not site:
+        return "Site not found", 404
+    new_val = 0 if site["owner_verified"] else 1
+    db.execute("UPDATE sites SET owner_verified=? WHERE id=?", (new_val, site_id))
+    db.commit()
+    return redirect(url_for("admin"))
 
 
 @app.route("/admin/approve/<int:site_id>")

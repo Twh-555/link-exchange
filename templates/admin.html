@@ -34,6 +34,11 @@
         <td>
           <a class="btn btn-primary btn-sm btn-green" href="{{ url_for('admin_approve', site_id=s.id) }}">Approve</a>
           <a class="btn btn-primary btn-sm btn-red" href="{{ url_for('admin_reject', site_id=s.id) }}">Reject</a>
+          {% if s.owner_verified %}
+          <a class="btn btn-primary btn-sm" href="{{ url_for('admin_verify_owner', site_id=s.id) }}" title="Unmark verified owner">Unverify</a>
+          {% else %}
+          <a class="btn btn-primary btn-sm" href="{{ url_for('admin_verify_owner', site_id=s.id) }}" title="Mark as verified owner" style="background:#0a7a3d;color:#fff">✓ Verify Owner</a>
+          {% endif %}
         </td>
       </tr>
       {% else %}
@@ -59,6 +64,34 @@
       </tr>
       {% else %}
       <tr><td colspan="5" style="text-align:center;color:#8a97ad;padding:20px">No exchange requests yet</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</article>
+
+<article class="content-article mt-8">
+  <h2>All Sites ({{ all_sites|length }} shown — verify owners)</h2>
+  <div class="admin-table-wrap">
+    <table>
+      <thead><tr><th>ID</th><th>Site</th><th>Email</th><th>DR</th><th>Status</th><th>Owner</th><th>Actions</th></tr></thead>
+      <tbody>
+      {% for s in all_sites %}
+      <tr>
+        <td>#{{ s.id }}</td>
+        <td><a href="{{ s.site_url }}" target="_blank">{{ s.site_name }}</a></td>
+        <td>{{ s.email }}</td>
+        <td>{{ s.dr }}</td>
+        <td>{{ s.status }}</td>
+        <td>{% if s.owner_verified %}<span class="tag-owner" style="padding:2px 10px;border-radius:12px;font-size:.75rem;font-weight:700"><i class="fa-solid fa-circle-check"></i> Verified</span>{% else %}<span style="color:#8a97ad;font-size:.8rem">Unverified</span>{% endif %}</td>
+        <td>
+          {% if s.owner_verified %}
+          <a class="btn btn-primary btn-sm" href="{{ url_for('admin_verify_owner', site_id=s.id) }}" title="Unmark verified owner">Unverify</a>
+          {% else %}
+          <a class="btn btn-primary btn-sm" href="{{ url_for('admin_verify_owner', site_id=s.id) }}" title="Mark as verified owner" style="background:#0a7a3d;color:#fff">✓ Verify Owner</a>
+          {% endif %}
+        </td>
+      </tr>
       {% endfor %}
       </tbody>
     </table>
