@@ -115,6 +115,9 @@
 </div>
 
 <div class="directory-wrap locked" id="directoryWrap" style="scroll-margin-top:80px">
+  <div style="text-align:right;margin-bottom:12px">
+    <a class="btn btn-primary btn-outline btn-sm" href="{{ url_for('directory') }}"><i class="fa-solid fa-layer-group"></i> Browse Full Directory ({{ sites|length }} sites)</a>
+  </div>
   <div class="directory-grid" id="grid">
     {% for s in sites %}
     <div class="site-card" data-name="{{ s.site_name.lower() }}" data-niche="{{ s.niche }}">

@@ -1136,6 +1136,8 @@ def niche_page(niche_name):
         exch_counts[row["site_url"]] = row["c"]
     return render_template("niche.html", sites=sites, pretty=pretty,
                            niche_name=niche_name, exch_counts=exch_counts,
+                           total_sites=db.execute(
+                               "SELECT COUNT(*) FROM sites WHERE status='active'").fetchone()[0],
                            site_url=SITE_URL)
 
 
@@ -1205,6 +1207,8 @@ def _prog_page(prog_type, niche_slug):
     return render_template("prog.html", data=data, t=t, sites=sites,
                            pretty=pretty, prog_type=prog_type, niche_slug=niche_slug,
                            title=title, desc=desc, exch_counts=exch_counts,
+                           total_sites=db.execute(
+                               "SELECT COUNT(*) FROM sites WHERE status='active'").fetchone()[0],
                            site_url=SITE_URL)
 
 
