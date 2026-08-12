@@ -67,7 +67,7 @@
     {% if sites %}
     <div class="directory-wrap locked" id="directoryWrap" style="margin-top:16px">
       <div style="text-align:right;margin-bottom:12px">
-        <a class="btn btn-primary btn-outline btn-sm" href="{{ url_for('directory') }}"><i class="fa-solid fa-layer-group"></i> Browse Full Directory ({{ total_sites }} sites)</a>
+        <a class="btn btn-primary btn-outline btn-sm" href="{{ url_for('directory') }}"><i class="fa-solid fa-layer-group"></i> Browse Full Directory</a>
       </div>
       <div class="directory-grid">
         {% for s in sites %}
