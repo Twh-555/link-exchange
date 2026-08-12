@@ -82,6 +82,7 @@
           {% if user_email %}
           <a href="{{ url_for('dashboard') }}" class="nav-link nav-login-mobile"><i class="fa-solid fa-gauge-high"></i> My Dashboard</a>
           <a href="{{ url_for('messages') }}" class="nav-link nav-login-mobile"><i class="fa-solid fa-envelope"></i> Messages / Requests{% if msg_count %} ({{ msg_count }}){% endif %}</a>
+          <a href="{{ url_for('dashboard') }}#exchanges" class="nav-link nav-login-mobile"><i class="fa-solid fa-arrow-right-arrow-left"></i> Exchange Tracking</a>
           <a href="{{ url_for('submit') }}" class="nav-link nav-login-mobile"><i class="fa-solid fa-plus"></i> List Your Website</a>
           <a href="{{ url_for('logout') }}" class="nav-link nav-login-mobile"><i class="fa-solid fa-right-from-bracket"></i> Logout</a>
           {% else %}
@@ -117,6 +118,7 @@
                 <i class="fa-solid fa-envelope"></i> Messages / Requests
                 {% if msg_count %}<span class="user-dd-badge">{{ msg_count }}</span>{% endif %}
               </a>
+              <a class="user-dd-item" href="{{ url_for('dashboard') }}#exchanges"><i class="fa-solid fa-arrow-right-arrow-left"></i> Exchange Tracking</a>
               <a class="user-dd-item" href="{{ url_for('submit') }}"><i class="fa-solid fa-plus"></i> List Your Website</a>
               <div class="user-dd-sep"></div>
               <a class="user-dd-item user-dd-logout" href="{{ url_for('logout') }}"><i class="fa-solid fa-right-from-bracket"></i> Logout</a>
