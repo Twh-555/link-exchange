@@ -435,7 +435,7 @@ def check_metrics():
         user_key = f"user:{session['user_email']}"
         if not _daily_allowed(user_key, limit=3):
             return jsonify({
-                "error": "Daily limit reached — 3 extra checks per day for logged-in users.",
+                "error": "Daily limit reached — logged-in users get 3 extra checks per day.",
                 "login_required": True,
                 "login_url": "https://thewebhospitality.com/link-exchange/login",
             }), 429
@@ -444,7 +444,7 @@ def check_metrics():
         # free users: 1 check/day (keyed by IP)
         if not _daily_allowed(ip, limit=DAILY_LIMIT):
             return jsonify({
-                "error": "Daily limit reached — 1 free check per day.",
+                "error": "Daily limit reached — 1 free check per day. Login for full access.",
                 "login_required": True,
                 "login_url": "https://thewebhospitality.com/link-exchange/login",
             }), 429
