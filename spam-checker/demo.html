@@ -84,7 +84,7 @@ async function checkMetrics() {
     if (data.error || data.limit) {
       resultsDiv.innerHTML = "";
       if (data.login_required) {
-        messageDiv.innerHTML = `<div class="error">⚠️ <b>Daily limit reached — 2 free checks per day.</b><br><br>Want more checks? <b>Login free</b> to get unlimited checks:<br><br><a href="${data.login_url}" style="display:inline-block;padding:10px 22px;background:#2f7cf6;color:#fff;text-decoration:none;border-radius:8px;font-weight:600">🔑 Login at Link Exchange</a><br><br><span style="font-size:.8rem">No account? Add your website free — instant login.</span></div>`;
+        messageDiv.innerHTML = `<div class="error">⚠️ <b>Daily limit reached.</b><br><br>Free users get 2 checks/day — <b>logged-in users get 3 extra checks</b>.<br><br><a href="${data.login_url}" style="display:inline-block;padding:10px 22px;background:#2f7cf6;color:#fff;text-decoration:none;border-radius:8px;font-weight:600">🔑 Login at Link Exchange</a><br><br><span style="font-size:.8rem">No account? Add your website free — instant login.</span></div>`;
       } else {
         messageDiv.innerHTML = `<div class="error">${data.error || data.limit}</div>`;
       }

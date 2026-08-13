@@ -391,15 +391,15 @@ def _daily_count(ip: str, day: str) -> int:
         return 0
 
 
-def _daily_allowed(ip: str) -> bool:
+def _daily_allowed(key: str, limit: int = DAILY_LIMIT) -> bool:
     try:
         db = sqlite3.connect(_LIMIT_DB)
         db.execute("CREATE TABLE IF NOT EXISTS daily_limits (ip TEXT, day TEXT, cnt INTEGER, PRIMARY KEY(ip, day))")
         db.commit()
         day = datetime.utcnow().strftime("%Y-%m-%d")
-        row = db.execute("SELECT cnt FROM daily_limits WHERE ip=? AND day=?", (ip, day)).fetchone()
+        row = db.execute("SELECT cnt FROM daily_limits WHERE ip=? AND day=?", (key, day)).fetchone()
         db.close()
-        return (row[0] if row else 0) < DAILY_LIMIT
+        return (row[0] if row else 0) < limit
     except Exception:
         return True  # fail-open
 
@@ -427,11 +427,22 @@ def check_metrics():
     if spam.get("verdict") == "invalid":
         return jsonify({"error": spam["error"]}), 400
 
-    # ---- daily limit: 2 checks per IP per day (logged-in users unlimited) ----
+    # ---- daily limit: 2 checks per IP per day + logged-in users get 3 EXTRA ----
     ip = request.remote_addr or "unknown"
     logged_in = bool(session.get("user_email"))
-    if not logged_in:
-        if not _daily_allowed(ip):
+    if logged_in:
+        # logged-in users: 3 extra checks/day (keyed by email)
+        user_key = f"user:{session['user_email']}"
+        if not _daily_allowed(user_key, limit=3):
+            return jsonify({
+                "error": "Daily limit reached — 3 extra checks per day for logged-in users.",
+                "login_required": True,
+                "login_url": "https://thewebhospitality.com/link-exchange/login",
+            }), 429
+        _daily_use(user_key)
+    else:
+        # free users: 2 checks/day (keyed by IP)
+        if not _daily_allowed(ip, limit=DAILY_LIMIT):
             return jsonify({
                 "error": "Daily limit reached — 2 free checks per day.",
                 "login_required": True,
