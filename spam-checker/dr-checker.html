@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Free Domain Rating Checker — Ahrefs DR Checker | TWH</title>
+<meta name="description" content="Free Domain Rating (DR) checker — check any website's Ahrefs Domain Rating instantly. No signup needed.">
+<meta name="robots" content="noindex, follow">
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:'Segoe UI',Arial,sans-serif;background:#f8fafc;color:#0f1b33;min-height:100vh}
+  .container{max-width:720px;margin:0 auto;padding:40px 20px}
+  h1{font-size:1.7rem;margin-bottom:8px;text-align:center}
+  .sub{text-align:center;color:#5a6b85;font-size:.95rem;margin-bottom:28px}
+  .search-section{display:flex;gap:10px;margin-bottom:16px}
+  input{flex:1;padding:13px 16px;border:1px solid #d5dce8;border-radius:10px;font-size:1rem;outline:none}
+  input:focus{border-color:#2f7cf6;box-shadow:0 0 0 3px rgba(47,124,246,.12)}
+  button{padding:13px 26px;background:#2f7cf6;color:#fff;border:0;border-radius:10px;font-size:1rem;font-weight:600;cursor:pointer}
+  button:disabled{opacity:.6;cursor:wait}
+  #results{display:flex;gap:14px;flex-wrap:wrap;margin-top:8px;justify-content:center}
+  .metric-card{background:#fff;border:1px solid #e3e8f2;border-radius:12px;padding:20px 26px;min-width:140px;flex:1;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,.05)}
+  .metric-card h2{font-size:1.6rem;margin:0 0 6px}
+  .metric-card p{margin:0;font-size:.82rem;color:#5a6b85;font-weight:600}
+  .metric-card.clean h2{color:#0a7a3d}
+  .metric-card.spam h2{color:#b00000}
+  .dr-big{font-size:3.2rem !important;font-weight:800;color:#2f7cf6}
+  .error{background:#ffecec;color:#b00000;padding:12px 16px;border-radius:8px;margin:12px 0;font-size:.9rem}
+  .success{background:#e7f9ee;color:#0a7a3d;padding:12px 16px;border-radius:8px;margin:12px 0;font-size:.9rem}
+  .loading{background:#eef4ff;color:#2f7cf6;padding:12px 16px;border-radius:8px;margin:12px 0;font-size:.9rem}
+  .note{text-align:center;color:#8a97ad;font-size:.78rem;margin-top:20px}
+  .promo-banner{display:flex;align-items:center;gap:14px;background:linear-gradient(135deg,#eef6ff,#e7f9ee);border:1px solid #c9e3ff;border-radius:14px;padding:16px 18px;margin-bottom:26px;flex-wrap:wrap}
+  .promo-icon{font-size:1.8rem}
+  .promo-text{flex:1;font-size:.9rem;color:#0f1b33;line-height:1.5;min-width:220px}
+  .promo-text a{color:#0a7a3d;text-decoration:underline}
+  .promo-btn{display:inline-block;padding:11px 20px;background:#0a7a3d;color:#fff;text-decoration:none;border-radius:10px;font-weight:700;font-size:.9rem;white-space:nowrap}
+  .promo-btn:hover{background:#086b35}
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>📊 Domain Rating (DR) Checker</h1>
+  <p class="sub">Check any website's Ahrefs Domain Rating (DR) instantly</p>
+
+  <div class="search-section">
+    <input type="text" id="domainInput" placeholder="Enter domain (e.g. example.com)">
+    <button onclick="checkDR()" id="checkBtn">Check DR</button>
+  </div>
+
+  <div id="message"></div>
+  <div id="results" style="display:flex;gap:14px;flex-wrap:wrap;margin-top:8px;justify-content:center"></div>
+
+  <p class="note">⚡ Free: 1 check per day per visitor</p>
+
+  <!-- PROMO: login ke liye -->
+  <div class="promo-banner">
+    <div class="promo-icon">🔑</div>
+    <div class="promo-text">
+      <b>Get UNLIMITED checks!</b> Add your website to our free
+      <a href="https://thewebhospitality.com/link-exchange/" target="_blank" rel="noopener"><b>Link Exchange directory</b></a>
+      — get extra checks daily + find link exchange partners for free backlinks.
+    </div>
+    <a class="promo-btn" href="https://thewebhospitality.com/link-exchange/submit" target="_blank" rel="noopener">Add Your Website — Free</a>
+  </div>
+</div>
+
+<script>
+const API_URL = "https://link-exchange-1.onrender.com/spam-score-checker/check-metrics";
+
+async function checkDR() {
+  const domain = document.getElementById("domainInput").value.trim();
+  const resultsDiv = document.getElementById("results");
+  const messageDiv = document.getElementById("message");
+  const btn = document.getElementById("checkBtn");
+
+  resultsDiv.innerHTML = "";
+  messageDiv.innerHTML = "";
+
+  if (!domain) {
+    messageDiv.innerHTML = '<div class="error">Please enter a domain name</div>';
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = "Checking...";
+  resultsDiv.innerHTML = '<div class="loading">Checking Domain Rating...</div>';
+
+  try {
+    const response = await fetch(API_URL + "?domain=" + encodeURIComponent(domain));
+    const data = await response.json();
+
+    if (data.error || data.limit) {
+      resultsDiv.innerHTML = "";
+      if (data.login_required) {
+        messageDiv.innerHTML = `<div class="error">⚠️ <b>Daily limit reached.</b><br><br>Free users get 1 check/day — <b>logged-in users get full access</b>.<br><br><a href="${data.login_url}" style="display:inline-block;padding:10px 22px;background:#2f7cf6;color:#fff;text-decoration:none;border-radius:8px;font-weight:600">🔑 Login at Link Exchange</a><br><br><span style="font-size:.8rem">No account? Add your website free — instant login.</span></div>`;
+      } else {
+        messageDiv.innerHTML = `<div class="error">${data.error || data.limit}</div>`;
+      }
+      btn.disabled = false; btn.textContent = "Check DR";
+      return;
+    }
+
+    const dr = data["Domain Rating"] || "N/A";
+    resultsDiv.innerHTML = "";
+    const card = document.createElement("div");
+    card.className = "metric-card";
+    card.innerHTML = `<h2 class="dr-big">${dr}</h2><p>Domain Rating (DR)</p>`;
+    resultsDiv.appendChild(card);
+
+    messageDiv.innerHTML = `<div class="success">✓ Checked Domain Rating for ${domain}</div>`;
+  } catch (err) {
+    resultsDiv.innerHTML = "";
+    messageDiv.innerHTML = `<div class="error">Request failed: ${err.message}</div>`;
+  }
+
+  btn.disabled = false;
+  btn.textContent = "Check DR";
+}
+
+document.getElementById('domainInput').addEventListener('keypress', function(e) {
+  if (e.key === 'Enter') checkDR();
+});
+</script>
+</body>
+</html>
