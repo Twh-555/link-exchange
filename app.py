@@ -82,6 +82,7 @@ ALLOWED_HOSTS = {
     "127.0.0.1", "localhost", "127.0.0.1:5051", "localhost:5051",
     "briefing-volumes-manner-analytical.trycloudflare.com",  # temp demo tunnel
     "guitar-congress-lap-validity.trycloudflare.com",  # temp demo tunnel
+    "strictly-bargains-classic-skirts.trycloudflare.com",  # temp demo tunnel (merged gp)
     "link-exchange-1.onrender.com",  # Render free deploy (temp)
 }
 
