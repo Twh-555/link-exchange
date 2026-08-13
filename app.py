@@ -217,7 +217,8 @@ CREATE TABLE IF NOT EXISTS sites (
     owner_verified INTEGER DEFAULT 0,
     created_at TEXT NOT NULL,
     approved_at TEXT,
-    notify INTEGER DEFAULT 1       -- 1 = send exchange emails, 0 = imported/legacy, no emails
+    notify INTEGER DEFAULT 1,      -- 1 = send exchange emails, 0 = imported/legacy, no emails
+    guest_post_price TEXT DEFAULT ''  -- optional: what the owner charges for guest posts ($)
 );
 CREATE TABLE IF NOT EXISTS exchanges (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -270,6 +271,7 @@ class _PGDB:
         sql = sql.replace("?,", "%s,")
         sql = sql.replace("(?)", "(%s)")
         sql = sql.replace("=?", "=%s")
+        sql = sql.replace("?)", "%s)")
         sql = sql.replace("LIKE ?", "LIKE %s")
         sql = sql.replace("IN (?)", "IN (%s)")
         sql = sql.replace("NOT IN (?)", "NOT IN (%s)")
@@ -349,6 +351,9 @@ def _sqlite_migrations(db):
     if "notify" not in cols:
         db.execute("ALTER TABLE sites ADD COLUMN notify INTEGER DEFAULT 1")
         db.execute("UPDATE sites SET notify=0 WHERE notify=1")
+        db.commit()
+    if "guest_post_price" not in cols:
+        db.execute("ALTER TABLE sites ADD COLUMN guest_post_price TEXT DEFAULT ''")
         db.commit()
     ecols = [r[1] for r in db.execute("PRAGMA table_info(exchanges)").fetchall()]
     if "my_link" not in ecols:
@@ -707,14 +712,15 @@ def submit():
                     verify_expires = (datetime.utcnow() +
                                       timedelta(hours=24)).isoformat()
                     db.execute(
-                        "INSERT INTO sites (site_name, site_url, email, niche, description, dr, da, traffic, status, token, password, verified, verify_token, verify_expires, owner_verified, created_at)"
-                        " VALUES (?,?,?,?,?,?,?,?, ?, ?, ?, 0, ?, ?, ?, ?)",
+                        "INSERT INTO sites (site_name, site_url, email, niche, description, dr, da, traffic, status, token, password, verified, verify_token, verify_expires, owner_verified, created_at, guest_post_price)"
+                        " VALUES (?,?,?,?,?,?,?,?, ?, ?, ?, 0, ?, ?, ?, ?, ?)",
                         (f.get("site_name", "").strip()[:60], site_url, email,
                          niche_str, f.get("description", "").strip()[:200],
                          min(dr, 100), min(da, 100),
                          f.get("traffic", "").strip()[:60],
                          new_status, token, password, verify_token, verify_expires,
-                         owner_verified, datetime.utcnow().isoformat()))
+                         owner_verified, datetime.utcnow().isoformat(),
+                         f.get("guest_post_price", "").strip()[:60]))
                     db.commit()
                     if new_status == "active":
                         msg = ("✅ Site submitted & LIVE! Your email matches the site domain — "
@@ -1472,7 +1478,7 @@ def admin():
     exchange_list = db.execute(
         "SELECT * FROM exchanges ORDER BY id DESC LIMIT 50").fetchall()
     all_sites = db.execute(
-        "SELECT id, site_name, site_url, email, dr, status, owner_verified FROM sites ORDER BY id DESC LIMIT 100").fetchall()
+        "SELECT id, site_name, site_url, email, dr, status, owner_verified, guest_post_price FROM sites ORDER BY id DESC LIMIT 100").fetchall()
     active = db.execute("SELECT COUNT(*) n FROM sites WHERE status='active'").fetchone()["n"]
     pending = len(pending_sites)
     exchanges = db.execute("SELECT COUNT(*) n FROM exchanges").fetchone()["n"]
