@@ -76,6 +76,22 @@ try:
 except Exception as _gp_err:  # noqa
     app.logger.warning("guest-post blueprint not loaded: %s", _gp_err)
 
+# ---- spam-checker app merged (mounted at /spam-score-checker/) ----
+try:
+    _sc_dir = str(BASE_DIR / "spam-checker")
+    if _sc_dir not in _sys.path:
+        _sys.path.insert(0, _sc_dir)
+    import backend as _sc_backend
+    # env for spam-checker (keys live in /data/spam-checker/.env on this host;
+    # on Render they come from render.yaml)
+    from werkzeug.middleware.dispatcher import DispatcherMiddleware
+    app.wsgi_app = DispatcherMiddleware(app.wsgi_app, {
+        "/spam-score-checker": _sc_backend.app
+    })
+    app.logger.info("spam-checker mounted at /spam-score-checker/")
+except Exception as _sc_err:  # noqa
+    app.logger.warning("spam-checker not mounted: %s", _sc_err)
+
 # ---------- Host restriction: only serve on thewebhospitality.com ----------
 ALLOWED_HOSTS = {
     "thewebhospitality.com", "www.thewebhospitality.com",
