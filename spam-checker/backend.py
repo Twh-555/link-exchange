@@ -30,7 +30,7 @@ from datetime import datetime
 from pathlib import Path
 
 import requests
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, session
 from flask_cors import CORS
 
 import spamcheck
@@ -45,6 +45,7 @@ if _env_file.exists():
             os.environ.setdefault(_k.strip(), _v.strip().strip('"').strip("'"))
 
 app = Flask(__name__)
+app.secret_key = os.environ.get("SECRET_KEY", "change-me-in-production")  # same key as link-exchange → shared session
 CORS(app)
 
 HEADERS = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/125.0 Safari/537.36"}
@@ -426,11 +427,17 @@ def check_metrics():
     if spam.get("verdict") == "invalid":
         return jsonify({"error": spam["error"]}), 400
 
-    # ---- daily limit: 2 checks per IP per day ----
+    # ---- daily limit: 2 checks per IP per day (logged-in users unlimited) ----
     ip = request.remote_addr or "unknown"
-    if not _daily_allowed(ip):
-        return jsonify({"error": "Daily limit reached — 2 free checks per day. Try again tomorrow."}), 429
-    _daily_use(ip)
+    logged_in = bool(session.get("user_email"))
+    if not logged_in:
+        if not _daily_allowed(ip):
+            return jsonify({
+                "error": "Daily limit reached — 2 free checks per day.",
+                "login_required": True,
+                "login_url": "https://thewebhospitality.com/link-exchange/login",
+            }), 429
+        _daily_use(ip)
 
     dapa = _dapachecker(domain)
     da = dapa.get("site_da")
@@ -459,6 +466,7 @@ def check_metrics():
         "DNSBL Hits": ", ".join(spam["dnsbl_hits"]) or "None",
         "IP": spam.get("ip") or "N/A",
         "Checks": spam["checks"],
+        "logged_in": logged_in,
         "checked_at": datetime.utcnow().isoformat() + "Z",
     })
 

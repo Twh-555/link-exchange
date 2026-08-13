@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Free Spam Score Checker — DA PA DR Checker | TWH</title>
+<meta name="description" content="Free spam score checker — check your website's spam score, domain authority, page authority and domain rating in seconds. No signup needed.">
+<meta name="robots" content="noindex, follow">
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:'Segoe UI',Arial,sans-serif;background:#f8fafc;color:#0f1b33;min-height:100vh}
+  .container{max-width:720px;margin:0 auto;padding:40px 20px}
+  h1{font-size:1.7rem;margin-bottom:8px;text-align:center}
+  .sub{text-align:center;color:#5a6b85;font-size:.95rem;margin-bottom:28px}
+  .search-section{display:flex;gap:10px;margin-bottom:16px}
+  input{flex:1;padding:13px 16px;border:1px solid #d5dce8;border-radius:10px;font-size:1rem;outline:none}
+  input:focus{border-color:#2f7cf6;box-shadow:0 0 0 3px rgba(47,124,246,.12)}
+  button{padding:13px 26px;background:#2f7cf6;color:#fff;border:0;border-radius:10px;font-size:1rem;font-weight:600;cursor:pointer}
+  button:disabled{opacity:.6;cursor:wait}
+  #results{display:flex;gap:14px;flex-wrap:wrap;margin-top:8px}
+  .metric-card{background:#fff;border:1px solid #e3e8f2;border-radius:12px;padding:20px 26px;min-width:140px;flex:1;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,.05)}
+  .metric-card h2{font-size:1.6rem;margin:0 0 6px}
+  .metric-card p{margin:0;font-size:.82rem;color:#5a6b85;font-weight:600}
+  .metric-card.clean h2{color:#0a7a3d}
+  .metric-card.spam h2{color:#b00000}
+  .error{background:#ffecec;color:#b00000;padding:12px 16px;border-radius:8px;margin:12px 0;font-size:.9rem}
+  .success{background:#e7f9ee;color:#0a7a3d;padding:12px 16px;border-radius:8px;margin:12px 0;font-size:.9rem}
+  .loading{background:#eef4ff;color:#2f7cf6;padding:12px 16px;border-radius:8px;margin:12px 0;font-size:.9rem}
+  .note{text-align:center;color:#8a97ad;font-size:.78rem;margin-top:20px}
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>🔍 Spam Score Checker</h1>
+  <p class="sub">Check spam score, domain authority (DA), page authority (PA) &amp; domain rating (DR)</p>
+
+  <div class="search-section">
+    <input type="text" id="domainInput" placeholder="Enter domain (e.g. example.com)">
+    <button onclick="checkMetrics()" id="checkBtn">Check Spam Score</button>
+  </div>
+
+  <div id="message"></div>
+  <div id="results" style="display:flex;gap:14px;flex-wrap:wrap"></div>
+
+  <p class="note">⚡ Free: 2 checks per day per visitor</p>
+</div>
+
+<style>
+  .metric-card{background:#fff;border:1px solid #e3e8f2;border-radius:12px;padding:20px 26px;min-width:140px;flex:1;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,.05)}
+  .metric-card h2{font-size:1.6rem;margin:0 0 6px;color:#0f1b33}
+  .metric-card p{margin:0;font-size:.82rem;color:#5a6b85;font-weight:600}
+  .metric-card.clean h2{color:#0a7a3d}
+  .metric-card.spam h2{color:#b00000}
+  .error{background:#ffecec;color:#b00000;padding:12px 16px;border-radius:8px;margin:12px 0;font-size:.9rem}
+  .success{background:#e7f9ee;color:#0a7a3d;padding:12px 16px;border-radius:8px;margin:12px 0;font-size:.9rem}
+  .loading{background:#eef4ff;color:#2f7cf6;padding:12px 16px;border-radius:8px;margin:12px 0;font-size:.9rem}
+</style>
+
+<script>
+const API_URL = "https://link-exchange-1.onrender.com/spam-score-checker/check-metrics";
+
+async function checkMetrics() {
+  const domain = document.getElementById("domainInput").value.trim();
+  const resultsDiv = document.getElementById("results");
+  const messageDiv = document.getElementById("message");
+  const btn = document.getElementById("checkBtn");
+
+  resultsDiv.innerHTML = "";
+  messageDiv.innerHTML = "";
+
+  if (!domain) {
+    messageDiv.innerHTML = '<div class="error">Please enter a domain name</div>';
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = "Checking...";
+  resultsDiv.innerHTML = '<div class="loading">Checking domain metrics...</div>';
+
+  try {
+    const response = await fetch(API_URL + "?domain=" + encodeURIComponent(domain));
+    const data = await response.json();
+
+    if (data.error || data.limit) {
+      resultsDiv.innerHTML = "";
+      if (data.login_required) {
+        messageDiv.innerHTML = `<div class="error">⚠️ <b>Daily limit reached — 2 free checks per day.</b><br><br>Want more checks? <b>Login free</b> to get unlimited checks:<br><br><a href="${data.login_url}" style="display:inline-block;padding:10px 22px;background:#2f7cf6;color:#fff;text-decoration:none;border-radius:8px;font-weight:600">🔑 Login at Link Exchange</a><br><br><span style="font-size:.8rem">No account? Add your website free — instant login.</span></div>`;
+      } else {
+        messageDiv.innerHTML = `<div class="error">${data.error || data.limit}</div>`;
+      }
+      btn.disabled = false; btn.textContent = "Check Spam Score";
+      return;
+    }
+
+    const metrics = [
+      { key: "Domain Authority (DA)", value: data["Domain Authority"] || "N/A" },
+      { key: "Domain Rating (DR)", value: data["Domain Rating"] || "N/A" },
+      { key: "Spam Score", value: data["Spam Score"] || "N/A" },
+      { key: "Page Authority (PA)", value: data["Page Authority"] || "N/A" },
+      { key: "Verdict", value: data["Verdict"] || "N/A" }
+    ];
+
+    resultsDiv.innerHTML = "";
+    const verdictClass = (data["Verdict"] || "").toLowerCase() === "spam" ? "spam" : "clean";
+    metrics.forEach(metric => {
+      const card = document.createElement("div");
+      card.className = "metric-card " + (metric.key === "Verdict" ? verdictClass : "");
+      card.innerHTML = `<h2>${metric.value}</h2><p>${metric.key}</p>`;
+      resultsDiv.appendChild(card);
+    });
+
+    messageDiv.innerHTML = `<div class="success">✓ Checked metrics for ${domain}</div>`;
+  } catch (err) {
+    resultsDiv.innerHTML = "";
+    messageDiv.innerHTML = `<div class="error">Request failed: ${err.message}</div>`;
+  }
+
+  btn.disabled = false;
+  btn.textContent = "Check Spam Score";
+}
+
+document.getElementById('domainInput').addEventListener('keypress', function(e) {
+  if (e.key === 'Enter') checkMetrics();
+});
+</script>
+</body>
+</html>
