@@ -59,6 +59,8 @@ app.secret_key = os.environ.get("SECRET_KEY", "change-me-in-production")
 ALLOWED_HOSTS = {
     "thewebhospitality.com", "www.thewebhospitality.com",
     "127.0.0.1", "localhost", "127.0.0.1:5051", "localhost:5051",
+    "briefing-volumes-manner-analytical.trycloudflare.com",  # temp demo tunnel
+    "guitar-congress-lap-validity.trycloudflare.com",  # temp demo tunnel
 }
 
 
@@ -175,12 +177,13 @@ NICHES = [
     "Society Politics", "Software PC", "Sports Nutrition", "Work Jobs",
 ]
 
-# Only these niches get programmatic SEO pages (14 x 3 = 42 pages)
+# Only these niches get programmatic SEO pages (15 x 3 = 45 pages)
 SEO_NICHES = [
     "Finance", "Business", "Marketing", "SaaS",
     "Cryptocurrency", "Pets", "Travel Tourism", "Cooking Food",
     "Beauty Fashion", "Health and Fitness", "Technology",
     "Education Science", "News Media", "Entertainment Hobbies",
+    "Real Estate",
 ]
 
 SCHEMA = """
