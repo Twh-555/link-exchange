@@ -711,10 +711,12 @@ def submit():
                     verify_token = secrets.token_urlsafe(24)
                     verify_expires = (datetime.utcnow() +
                                       timedelta(hours=24)).isoformat()
+                    # site name = domain (user no longer enters it)
+                    auto_name = site_url.replace("www.", "")[:60]
                     db.execute(
                         "INSERT INTO sites (site_name, site_url, email, niche, description, dr, da, traffic, status, token, password, verified, verify_token, verify_expires, owner_verified, created_at, guest_post_price)"
                         " VALUES (?,?,?,?,?,?,?,?, ?, ?, ?, 0, ?, ?, ?, ?, ?)",
-                        (f.get("site_name", "").strip()[:60], site_url, email,
+                        (auto_name, site_url, email,
                          niche_str, f.get("description", "").strip()[:200],
                          min(dr, 100), min(da, 100),
                          f.get("traffic", "").strip()[:60],
@@ -1080,11 +1082,12 @@ def edit_site(site_id):
             msg = "❌ DR and DA must be between 0 and 100."
         else:
             db.execute(
-                "UPDATE sites SET site_name=?, description=?, dr=?, da=?, traffic=? WHERE id=?",
+                "UPDATE sites SET site_name=?, description=?, dr=?, da=?, traffic=?, guest_post_price=? WHERE id=?",
                 (f.get("site_name", "").strip()[:60],
                  f.get("description", "").strip()[:200],
                  min(dr, 100), min(da, 100),
-                 f.get("traffic", "").strip()[:60], site_id))
+                 f.get("traffic", "").strip()[:60],
+                 f.get("guest_post_price", "").strip()[:60], site_id))
             db.commit()
             msg = "✅ Listing updated!"
             ok = True

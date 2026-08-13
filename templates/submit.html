@@ -71,13 +71,10 @@
           if (!sel) return;
           sel.addEventListener('change', function () {
             var opt = sel.options[sel.selectedIndex];
-            var nameIn = document.getElementById('siteNameInput');
             var urlIn = document.getElementById('siteUrlInput');
             if (opt && opt.value) {
-              if (nameIn) nameIn.value = opt.getAttribute('data-name') || '';
               if (urlIn) { urlIn.value = opt.value; urlIn.readOnly = true; }
             } else {
-              if (nameIn) nameIn.value = '';
               if (urlIn) { urlIn.value = ''; urlIn.readOnly = false; }
             }
           });
@@ -99,12 +96,9 @@
       <input type="hidden" name="email" value="{{ user_email }}">
       {% endif %}
       <div class="form-group">
-        <label class="field-label">Site Name</label>
-        <input class="form-control" name="site_name" id="siteNameInput" required placeholder="My Awesome Blog">
-      </div>
-      <div class="form-group">
         <label class="field-label">Site URL</label>
         <input class="form-control" name="site_url" id="siteUrlInput" required placeholder="myblog.com">
+        <p class="form-note" style="margin-top:4px"><i class="fa-solid fa-globe"></i> Your website name will be set automatically from this domain.</p>
       </div>
       {% if not user_email %}
       <div class="form-group">
