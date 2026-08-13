@@ -376,8 +376,8 @@ def _traffic(domain: str) -> int | None:
         return None
 
 
-# ---------- daily limit: 2 checks per IP per day ----------
-DAILY_LIMIT = int(os.environ.get("DAILY_LIMIT", "2"))
+# ---------- daily limit: 1 check per IP per day ----------
+DAILY_LIMIT = int(os.environ.get("DAILY_LIMIT", "1"))
 _LIMIT_DB = Path(__file__).resolve().parent / "limit.db"
 
 
@@ -441,10 +441,10 @@ def check_metrics():
             }), 429
         _daily_use(user_key)
     else:
-        # free users: 2 checks/day (keyed by IP)
+        # free users: 1 check/day (keyed by IP)
         if not _daily_allowed(ip, limit=DAILY_LIMIT):
             return jsonify({
-                "error": "Daily limit reached — 2 free checks per day.",
+                "error": "Daily limit reached — 1 free check per day.",
                 "login_required": True,
                 "login_url": "https://thewebhospitality.com/link-exchange/login",
             }), 429

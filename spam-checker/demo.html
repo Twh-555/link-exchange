@@ -27,10 +27,27 @@
   .success{background:#e7f9ee;color:#0a7a3d;padding:12px 16px;border-radius:8px;margin:12px 0;font-size:.9rem}
   .loading{background:#eef4ff;color:#2f7cf6;padding:12px 16px;border-radius:8px;margin:12px 0;font-size:.9rem}
   .note{text-align:center;color:#8a97ad;font-size:.78rem;margin-top:20px}
+  .promo-banner{display:flex;align-items:center;gap:14px;background:linear-gradient(135deg,#eef6ff,#e7f9ee);border:1px solid #c9e3ff;border-radius:14px;padding:16px 18px;margin-bottom:26px;flex-wrap:wrap}
+  .promo-icon{font-size:1.8rem}
+  .promo-text{flex:1;font-size:.9rem;color:#0f1b33;line-height:1.5;min-width:220px}
+  .promo-text a{color:#0a7a3d;text-decoration:underline}
+  .promo-btn{display:inline-block;padding:11px 20px;background:#0a7a3d;color:#fff;text-decoration:none;border-radius:10px;font-weight:700;font-size:.9rem;white-space:nowrap}
+  .promo-btn:hover{background:#086b35}
 </style>
 </head>
 <body>
 <div class="container">
+  <!-- PROMO: login ke liye -->
+  <div class="promo-banner">
+    <div class="promo-icon">🔑</div>
+    <div class="promo-text">
+      <b>Get UNLIMITED DR checks!</b> Add your website to our free
+      <a href="https://thewebhospitality.com/link-exchange/" target="_blank" rel="noopener"><b>Link Exchange directory</b></a>
+      — get 3 extra checks daily + find link exchange partners for free backlinks.
+    </div>
+    <a class="promo-btn" href="https://thewebhospitality.com/link-exchange/submit" target="_blank" rel="noopener">Add Your Website — Free</a>
+  </div>
+
   <h1>🔍 Spam Score Checker</h1>
   <p class="sub">Check spam score, domain authority (DA), page authority (PA) &amp; domain rating (DR)</p>
 
@@ -42,7 +59,7 @@
   <div id="message"></div>
   <div id="results" style="display:flex;gap:14px;flex-wrap:wrap"></div>
 
-  <p class="note">⚡ Free: 2 checks per day per visitor</p>
+  <p class="note">⚡ Free: 1 check per day per visitor</p>
 </div>
 
 <style>
@@ -84,7 +101,7 @@ async function checkMetrics() {
     if (data.error || data.limit) {
       resultsDiv.innerHTML = "";
       if (data.login_required) {
-        messageDiv.innerHTML = `<div class="error">⚠️ <b>Daily limit reached.</b><br><br>Free users get 2 checks/day — <b>logged-in users get 3 extra checks</b>.<br><br><a href="${data.login_url}" style="display:inline-block;padding:10px 22px;background:#2f7cf6;color:#fff;text-decoration:none;border-radius:8px;font-weight:600">🔑 Login at Link Exchange</a><br><br><span style="font-size:.8rem">No account? Add your website free — instant login.</span></div>`;
+        messageDiv.innerHTML = `<div class="error">⚠️ <b>Daily limit reached.</b><br><br>Free users get 1 check/day — <b>logged-in users get 3 extra checks</b>.<br><br><a href="${data.login_url}" style="display:inline-block;padding:10px 22px;background:#2f7cf6;color:#fff;text-decoration:none;border-radius:8px;font-weight:600">🔑 Login at Link Exchange</a><br><br><span style="font-size:.8rem">No account? Add your website free — instant login.</span></div>`;
       } else {
         messageDiv.innerHTML = `<div class="error">${data.error || data.limit}</div>`;
       }
