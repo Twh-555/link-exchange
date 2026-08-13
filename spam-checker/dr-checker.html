@@ -65,7 +65,6 @@
 
 <script>
 const API_URL = "https://link-exchange-1.onrender.com/spam-score-checker/check-metrics?nolimit=1";
-
 async function checkDR() {
   const domain = document.getElementById("domainInput").value.trim();
   const resultsDiv = document.getElementById("results");
@@ -85,7 +84,7 @@ async function checkDR() {
   resultsDiv.innerHTML = '<div class="loading">Checking Domain Rating...</div>';
 
   try {
-    const response = await fetch(API_URL + "?domain=" + encodeURIComponent(domain));
+    const response = await fetch(API_URL + "&domain=" + encodeURIComponent(domain));
     const data = await response.json();
 
     if (data.error || data.limit) {
