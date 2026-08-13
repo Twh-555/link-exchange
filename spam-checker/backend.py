@@ -427,7 +427,37 @@ def check_metrics():
     if spam.get("verdict") == "invalid":
         return jsonify({"error": spam["error"]}), 400
 
-    # ---- daily limit: 2 checks per IP per day + logged-in users get 3 EXTRA ----
+    # ---- daily limit: 1 check per IP per day + logged-in users get 3 EXTRA ----
+    # (skip limit entirely when nolimit=1 — used by the DR Checker tool)
+    if request.args.get("nolimit") == "1":
+        logged_in = bool(session.get("user_email"))
+        dapa = _dapachecker(domain)
+        da = dapa.get("site_da")
+        pa = dapa.get("site_pa")
+        dapa_spam = dapa.get("spam_score")
+        dr = _ahrefs_dr(domain)
+        spam_pct = spam["score"]
+        if dapa_spam is not None and dapa_spam > 0:
+            spam_pct = int(dapa_spam)
+
+        def fmt(v, label):
+            return "N/A" if v is None else str(v)
+
+        return jsonify({
+            "domain": domain,
+            "Domain Authority": fmt(da, "DA"),
+            "Domain Rating": fmt(dr, "DR") + ("" if dr is not None else " (free Ahrefs key needed)"),
+            "Spam Score": f"{spam_pct}%" if spam_pct else "0%",
+            "Page Authority": fmt(pa, "PA"),
+            "DA Source": "dapachecker.org" if da is not None else "N/A",
+            "Verdict": spam["verdict"].upper(),
+            "DNSBL Hits": ", ".join(spam["dnsbl_hits"]) or "None",
+            "IP": spam.get("ip") or "N/A",
+            "Checks": spam["checks"],
+            "logged_in": logged_in,
+            "checked_at": datetime.utcnow().isoformat() + "Z",
+        })
+
     ip = request.remote_addr or "unknown"
     logged_in = bool(session.get("user_email"))
     if logged_in:
