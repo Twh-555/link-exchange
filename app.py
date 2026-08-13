@@ -161,8 +161,23 @@ def send_mail(to_email, subject, html_body):
     except Exception as e:
         return False, str(e)
 
+# All niches (shown in filter/directory dropdown)
 NICHES = [
-    "All", "Finance", "Business", "Marketing", "SaaS",
+    "All", "Finance", "Business", "Marketing", "Design Development",
+    "Technology", "SaaS", "Education Science", "News Media",
+    "Entertainment Hobbies", "Travel Tourism", "Cooking Food",
+    "Beauty Fashion", "Health and Fitness", "Relationships",
+    "Gaming Video Games", "Home Family", "Lifestyle Hobbies", "Pets",
+    "Religion Astrology", "Cryptocurrency", "Law Jurisprudence",
+    "Logistics Transportation", "Manufacturing Agriculture",
+    "Music Cinema", "Photography Videography", "Other",
+    "Psychology Development", "Real Estate", "Digital Marketing SEO",
+    "Society Politics", "Software PC", "Sports Nutrition", "Work Jobs",
+]
+
+# Only these niches get programmatic SEO pages (14 x 3 = 42 pages)
+SEO_NICHES = [
+    "Finance", "Business", "Marketing", "SaaS",
     "Cryptocurrency", "Pets", "Travel Tourism", "Cooking Food",
     "Beauty Fashion", "Health and Fitness", "Technology",
     "Education Science", "News Media", "Entertainment Hobbies",
@@ -1598,7 +1613,7 @@ def sitemap():
     sites = db.execute(
         "SELECT id, site_name, site_url, dr FROM sites WHERE status='active' ORDER BY dr DESC").fetchall()
     urls = [f"<url><loc>{SITE_URL}/link-exchange/</loc><changefreq>daily</changefreq><priority>0.9</priority></url>"]
-    for n in NICHES[1:]:
+    for n in SEO_NICHES:
         slug = n.lower().replace(" / ", "-").replace(" ", "-")
         urls.append(
             f"<url><loc>{SITE_URL}/link-exchange/niche/{slug}/</loc>"
@@ -1630,7 +1645,7 @@ def niche_page(niche_name):
     # normalize: "tech-saas" -> "Tech / SaaS"
     pretty = niche_name.replace("-", " ").title()
     matched = False
-    for n in NICHES:
+    for n in SEO_NICHES:
         if n.lower().replace(" / ", "-").replace(" ", "-") == niche_name.lower():
             pretty = n
             matched = True
@@ -1696,6 +1711,12 @@ def prog_page_backlinks(niche_slug):
 
 
 def _prog_page(prog_type, niche_slug):
+    # only the 14 SEO niches get programmatic pages
+    valid = any(
+        n.lower().replace(" / ", "-").replace(" ", "-") == niche_slug.lower()
+        for n in SEO_NICHES)
+    if not valid:
+        return "Not found", 404
     data = get_niche_data(niche_slug)
     db = get_db()
     pretty = data["name"]
