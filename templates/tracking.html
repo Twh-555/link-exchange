@@ -27,7 +27,7 @@
             <div style="font-weight:700;font-size:.88rem;color:var(--dark,#0f1b33)">
               {{ ex._partner_name }} <span style="font-weight:400;color:var(--muted,#8a97ad);font-size:.75rem">(DR {{ ex._partner_dr or '—' }})</span>
             </div>
-            <div style="font-size:.75rem;color:var(--muted,#8a97ad)">{{ ex._partner_url }} · {{ ex.created_at[:10] }}</div>
+            <div style="font-size:.75rem;color:var(--muted,#8a97ad)">{{ ex._partner_url }} · {{ (ex.created_at|string)[:10] }}</div>
           </div>
           <span style="font-size:.7rem;font-weight:700;padding:4px 10px;border-radius:50px;
             {% if ex.status == 'done' %}background:#e8f5e9;color:#0a7a3d

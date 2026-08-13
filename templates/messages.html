@@ -34,7 +34,7 @@
         </div>
         <div style="font-size:.85rem;color:#3a4a63;line-height:1.7;margin:12px 0 0;white-space:pre-line">{{ r._body or r.message }}</div>
         <div style="display:flex;gap:10px;align-items:center;justify-content:space-between;margin-top:12px;flex-wrap:wrap">
-          <span style="font-size:.72rem;color:var(--muted,#aab4c6)">For <b>{{ r._site_name }}</b> · {{ r.created_at[:10] }}</span>
+          <span style="font-size:.72rem;color:var(--muted,#aab4c6)">For <b>{{ r._site_name }}</b> · {{ (r.created_at|string)[:10] }}</span>
           <div style="display:flex;gap:8px">
             {% if r._from_email %}
             <a class="btn btn-primary btn-sm" href="mailto:{{ r._from_email }}?subject=Re:%20Link%20Exchange%20with%20{{ r._site_url or r._site_name }}"><i class="fa-solid fa-reply"></i> Reply</a>

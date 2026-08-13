@@ -49,7 +49,7 @@
         <tr><td style="padding:6px 0;color:var(--muted,#5a6b85)">URL</td><td style="padding:6px 0;font-weight:700;text-align:right">{{ site.site_url }}</td></tr>
         <tr><td style="padding:6px 0;color:var(--muted,#5a6b85)">Niches</td><td style="padding:6px 0;font-weight:700;text-align:right">{{ site.niche }}</td></tr>
         <tr><td style="padding:6px 0;color:var(--muted,#5a6b85)">DR / DA</td><td style="padding:6px 0;font-weight:700;text-align:right">{{ site.dr }} / {{ site.da }}</td></tr>
-        <tr><td style="padding:6px 0;color:var(--muted,#5a6b85)">Submitted</td><td style="padding:6px 0;font-weight:700;text-align:right">{{ site.created_at[:10] }}</td></tr>
+        <tr><td style="padding:6px 0;color:var(--muted,#5a6b85)">Submitted</td><td style="padding:6px 0;font-weight:700;text-align:right">{{ (site.created_at|string)[:10] }}</td></tr>
       </table>
     </div>
 

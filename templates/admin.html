@@ -30,7 +30,7 @@
         <td>{{ s.traffic or '-' }}</td>
         <td>{% if s.owner_verified %}<span class="tag-owner" style="padding:2px 10px;border-radius:12px;font-size:.75rem;font-weight:700"><i class="fa-solid fa-circle-check"></i> Verified</span>{% else %}<span style="color:#8a97ad;font-size:.8rem">Unverified</span>{% endif %}</td>
         <td>{{ s.email }}</td>
-        <td>{{ s.created_at[:10] }}</td>
+        <td>{{ (s.created_at|string)[:10] }}</td>
         <td>
           <a class="btn btn-primary btn-sm btn-green" href="{{ url_for('admin_approve', site_id=s.id) }}">Approve</a>
           <a class="btn btn-primary btn-sm btn-red" href="{{ url_for('admin_reject', site_id=s.id) }}">Reject</a>

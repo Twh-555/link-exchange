@@ -52,6 +52,16 @@ DB_PATH = BASE_DIR / "linkexchange.db"
 SITE_URL = "https://www.thewebhospitality.com"
 CONTACT_EMAIL = os.environ.get("CONTACT_EMAIL", "hello@thewebhospitality.com")
 
+# --- Database mode: Supabase (Postgres) when DATABASE_URL set, else local SQLite ---
+DATABASE_URL = os.environ.get("DATABASE_URL", "").strip()
+USE_POSTGRES = bool(DATABASE_URL)
+if USE_POSTGRES:
+    try:
+        import psycopg2
+        import psycopg2.extras
+    except ImportError:
+        USE_POSTGRES = False
+
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "change-me-in-production")
 
@@ -228,43 +238,129 @@ CREATE TABLE IF NOT EXISTS exchanges (
 
 def get_db():
     if "db" not in g:
-        g.db = sqlite3.connect(DB_PATH)
-        g.db.row_factory = sqlite3.Row
-        g.db.executescript(SCHEMA)
-        # migration: ensure traffic + token + password + verified columns exist (older DBs)
-        cols = [r[1] for r in g.db.execute("PRAGMA table_info(sites)").fetchall()]
-        if "traffic" not in cols:
-            g.db.execute("ALTER TABLE sites ADD COLUMN traffic TEXT DEFAULT ''")
-        if "token" not in cols:
-            g.db.execute("ALTER TABLE sites ADD COLUMN token TEXT DEFAULT ''")
-        if "password" not in cols:
-            g.db.execute("ALTER TABLE sites ADD COLUMN password TEXT DEFAULT ''")
-        if "verified" not in cols:
-            g.db.execute("ALTER TABLE sites ADD COLUMN verified INTEGER DEFAULT 0")
-            g.db.execute("ALTER TABLE sites ADD COLUMN verify_token TEXT DEFAULT ''")
-            g.db.execute("ALTER TABLE sites ADD COLUMN verify_expires TEXT DEFAULT ''")
-        elif "verify_token" not in cols:
-            g.db.execute("ALTER TABLE sites ADD COLUMN verify_token TEXT DEFAULT ''")
-        if "owner_verified" not in cols:
-            g.db.execute("ALTER TABLE sites ADD COLUMN owner_verified INTEGER DEFAULT 0")
-        if "notify" not in cols:
-            g.db.execute("ALTER TABLE sites ADD COLUMN notify INTEGER DEFAULT 1")
-            # existing (pre-flag) sites are legacy/imported -> no emails from us
-            g.db.execute("UPDATE sites SET notify=0 WHERE notify=1")
-            g.db.commit()
-        # exchanges migration: my_link/partner_link/last_checked
-        ecols = [r[1] for r in g.db.execute("PRAGMA table_info(exchanges)").fetchall()]
-        if "my_link" not in ecols:
-            g.db.execute("ALTER TABLE exchanges ADD COLUMN my_link TEXT DEFAULT ''")
-            g.db.execute("ALTER TABLE exchanges ADD COLUMN partner_link TEXT DEFAULT ''")
-            g.db.execute("ALTER TABLE exchanges ADD COLUMN last_checked TEXT DEFAULT ''")
-        if "my_link_page" not in ecols:
-            g.db.execute("ALTER TABLE exchanges ADD COLUMN my_link_page TEXT DEFAULT ''")
-            g.db.execute("ALTER TABLE exchanges ADD COLUMN partner_link_page TEXT DEFAULT ''")
-        if "is_read" not in ecols:
-            g.db.execute("ALTER TABLE exchanges ADD COLUMN is_read INTEGER DEFAULT 0")
-        g.db.commit()
+        if USE_POSTGRES:
+            conn = psycopg2.connect(DATABASE_URL, sslmode="require")
+            conn.autocommit = False
+            g.db = _PGDB(conn)
+            g.db.row_factory = sqlite3.Row  # enable dict rows
+        else:
+            g.db = sqlite3.connect(DB_PATH)
+            g.db.row_factory = sqlite3.Row
+            g.db.executescript(SCHEMA)
+            _sqlite_migrations(g.db)
     return g.db
+
+
+class _PGDB:
+    """Postgres adapter — same interface as sqlite3 (execute, executemany, commit, row_factory)."""
+
+    def __init__(self, conn):
+        self.conn = conn
+        self.row_factory = None
+
+    def _cur(self):
+        if self.row_factory == sqlite3.Row:
+            return self.conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        return self.conn.cursor()
+
+    def _fix_sql(self, sql):
+        # sqlite -> postgres syntax adapters
+        sql = sql.replace("INSERT OR IGNORE", "INSERT")
+        sql = sql.replace("? ", "%s ")
+        sql = sql.replace("?,", "%s,")
+        sql = sql.replace("(?)", "(%s)")
+        sql = sql.replace("=?", "=%s")
+        sql = sql.replace("LIKE ?", "LIKE %s")
+        sql = sql.replace("IN (?)", "IN (%s)")
+        sql = sql.replace("NOT IN (?)", "NOT IN (%s)")
+        return sql
+
+    def execute(self, sql, params=()):
+        cur = self._cur()
+        cur.execute(self._fix_sql(sql), params if params else None)
+        return _PGRow(cur)
+
+    def executescript(self, sql):
+        # schema handled at Supabase side; no-op to keep interface
+        return None
+
+    def commit(self):
+        self.conn.commit()
+
+    def close(self):
+        self.conn.close()
+
+
+class _PGRow:
+    """Cursor wrapper mimicking sqlite3 cursor .fetchone()/.fetchall() returning dict-like rows."""
+
+    def __init__(self, cur):
+        self.cur = cur
+
+    def fetchone(self):
+        r = self.cur.fetchone()
+        if r is None:
+            return None
+        d = dict(r)
+        # allow both dict-style (row["col"]) and tuple-style (row[0]) access
+        if len(d) == 1:
+            return _HybridRow(d)
+        return d
+
+    def fetchall(self):
+        out = []
+        for r in self.cur.fetchall():
+            d = dict(r)
+            out.append(_HybridRow(d) if len(d) == 1 else d)
+        return out
+
+
+class _HybridRow(dict):
+    """dict row that also supports integer index access (for COUNT(*) -> row[0])."""
+
+    def __getitem__(self, key):
+        if isinstance(key, int):
+            vals = list(self.values())
+            return vals[key]
+        return dict.__getitem__(self, key)
+
+    @property
+    def rowcount(self):
+        return self.cur.rowcount
+
+
+def _sqlite_migrations(db):
+    """SQLite-only column migrations (Postgres schema created at Supabase side)."""
+    cols = [r[1] for r in db.execute("PRAGMA table_info(sites)").fetchall()]
+    if "traffic" not in cols:
+        db.execute("ALTER TABLE sites ADD COLUMN traffic TEXT DEFAULT ''")
+    if "token" not in cols:
+        db.execute("ALTER TABLE sites ADD COLUMN token TEXT DEFAULT ''")
+    if "password" not in cols:
+        db.execute("ALTER TABLE sites ADD COLUMN password TEXT DEFAULT ''")
+    if "verified" not in cols:
+        db.execute("ALTER TABLE sites ADD COLUMN verified INTEGER DEFAULT 0")
+        db.execute("ALTER TABLE sites ADD COLUMN verify_token TEXT DEFAULT ''")
+        db.execute("ALTER TABLE sites ADD COLUMN verify_expires TEXT DEFAULT ''")
+    elif "verify_token" not in cols:
+        db.execute("ALTER TABLE sites ADD COLUMN verify_token TEXT DEFAULT ''")
+    if "owner_verified" not in cols:
+        db.execute("ALTER TABLE sites ADD COLUMN owner_verified INTEGER DEFAULT 0")
+    if "notify" not in cols:
+        db.execute("ALTER TABLE sites ADD COLUMN notify INTEGER DEFAULT 1")
+        db.execute("UPDATE sites SET notify=0 WHERE notify=1")
+        db.commit()
+    ecols = [r[1] for r in db.execute("PRAGMA table_info(exchanges)").fetchall()]
+    if "my_link" not in ecols:
+        db.execute("ALTER TABLE exchanges ADD COLUMN my_link TEXT DEFAULT ''")
+        db.execute("ALTER TABLE exchanges ADD COLUMN partner_link TEXT DEFAULT ''")
+        db.execute("ALTER TABLE exchanges ADD COLUMN last_checked TEXT DEFAULT ''")
+    if "my_link_page" not in ecols:
+        db.execute("ALTER TABLE exchanges ADD COLUMN my_link_page TEXT DEFAULT ''")
+        db.execute("ALTER TABLE exchanges ADD COLUMN partner_link_page TEXT DEFAULT ''")
+    if "is_read" not in ecols:
+        db.execute("ALTER TABLE exchanges ADD COLUMN is_read INTEGER DEFAULT 0")
+    db.commit()
 
 
 @app.teardown_appcontext
@@ -723,7 +819,9 @@ def verify(verify_token):
         return render_template("verify.html", ok=False, reason="invalid", site_url=SITE_URL)
     # check expiry
     try:
-        exp = datetime.fromisoformat(site["verify_expires"])
+        exp = site["verify_expires"]
+        if isinstance(exp, str):
+            exp = datetime.fromisoformat(exp)
         if datetime.utcnow() > exp:
             return render_template("verify.html", ok=False, reason="expired", site_url=SITE_URL)
     except (ValueError, TypeError):
