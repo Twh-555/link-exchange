@@ -46,6 +46,11 @@
         <label class="field-label">Monthly Traffic</label>
         <input class="form-control" name="traffic" value="{{ s.traffic }}" placeholder="e.g. 50K visitors/month">
       </div>
+      <div class="form-group">
+        <label class="field-label">Your Guest Post Pricing (if any, in $) <span class="tooltip-icon" data-tooltip="Optional — what you charge for a guest post (e.g. 25, 50, 100). Only visible to you & admin."><i class="fa-solid fa-circle-info"></i></span></label>
+        <input class="form-control" name="guest_post_price" value="{{ s.guest_post_price }}" placeholder="e.g. 25, 50, 100 (optional)">
+        <p class="form-note" style="font-size:.78rem;color:var(--muted,#5a6b85);margin-top:4px"><i class="fa-solid fa-dollar-sign"></i> Not shown publicly — only you and the admin can see this.</p>
+      </div>
       <div style="display:flex;gap:10px;flex-wrap:wrap">
         <button class="btn btn-primary btn-lg" type="submit"><i class="fa-solid fa-floppy-disk"></i> Save Changes</button>
         <a class="btn btn-primary btn-outline btn-lg" href="{{ url_for('dashboard') }}"><i class="fa-solid fa-arrow-left"></i> Back to Dashboard</a>
