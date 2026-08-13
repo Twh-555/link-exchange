@@ -1,4 +1,4 @@
-{% extends 'base.html' %}
+{% extends 'gp_base.html' %}
 {% block title %}Login — Guest Posting Sites List | TWH{% endblock %}
 {% block robots %}noindex, follow{% endblock %}
 {% block content %}
@@ -27,7 +27,7 @@
       <button class="btn btn-primary btn-block btn-lg" type="submit"><i class="fa-solid fa-right-to-bracket"></i> Login</button>
     </form>
     <p style="margin-top:14px;font-size:.85rem;color:var(--muted,#5a6b85);text-align:center">
-      No account yet? <a href="{{ url_for('submit') }}"><strong>Add your website free</strong></a> — you'll get a login password automatically.
+      No account yet? <a href="{{ url_for('gp.submit') }}"><strong>Add your website free</strong></a> — you'll get a login password automatically.
     </p>
   </div>
 </div>

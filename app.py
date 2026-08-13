@@ -65,6 +65,17 @@ if USE_POSTGRES:
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "change-me-in-production")
 
+# ---- guest-post-submit app merged (blueprint at /guest-posting-sites-list/) ----
+try:
+    import sys as _sys
+    _gp_dir = str(BASE_DIR / "guest-post-submit")
+    if _gp_dir not in _sys.path:
+        _sys.path.insert(0, _gp_dir)
+    from gp_blueprint import register as _register_gp
+    _register_gp(app)
+except Exception as _gp_err:  # noqa
+    app.logger.warning("guest-post blueprint not loaded: %s", _gp_err)
+
 # ---------- Host restriction: only serve on thewebhospitality.com ----------
 ALLOWED_HOSTS = {
     "thewebhospitality.com", "www.thewebhospitality.com",

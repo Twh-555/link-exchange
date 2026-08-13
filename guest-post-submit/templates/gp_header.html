@@ -79,9 +79,9 @@
 
         <div class="nav-actions">
           {% if user_email %}
-          <a href="{{ url_for('logout') }}" class="nav-link" style="display:inline-flex;align-items:center;gap:6px"><i class="fa-solid fa-right-from-bracket"></i> Logout</a>
+          <a href="{{ url_for('gp.logout') }}" class="nav-link" style="display:inline-flex;align-items:center;gap:6px"><i class="fa-solid fa-right-from-bracket"></i> Logout</a>
           {% else %}
-          <a href="{{ url_for('login') }}" class="nav-link" style="display:inline-flex;align-items:center;gap:6px"><i class="fa-solid fa-right-to-bracket"></i> Login</a>
+          <a href="{{ url_for('gp.login') }}" class="nav-link" style="display:inline-flex;align-items:center;gap:6px"><i class="fa-solid fa-right-to-bracket"></i> Login</a>
           {% endif %}
           <button id="themeToggleBtn" class="theme-toggle-btn" title="Toggle Light/Dark mode" aria-label="Toggle Theme">
             <i class="fa-solid fa-moon"></i>

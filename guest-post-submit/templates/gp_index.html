@@ -1,4 +1,4 @@
-{% extends 'base.html' %}
+{% extends 'gp_base.html' %}
 {% block title %}144+ Free Guest Posting Sites List 2026 for Backlinks | TWH{% endblock %}
 {% block canonical %}{{ site_url }}/guest-posting-sites-list/{% endblock %}
 {% block meta_desc %}Free guest posting sites list 2026 — 144+ high DA websites accepting guest posts. Submit your website free or get instant listing for guest post opportunities.{% endblock %}
@@ -16,7 +16,7 @@
     to get discovered by brands.
   </p>
   <div class="hero-actions" style="margin-top:18px;display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
-    <a class="btn btn-primary" href="{{ url_for('submit') }}"><i class="fa-solid fa-plus"></i> Add Your Website — Free</a>
+    <a class="btn btn-primary" href="{{ url_for('gp.submit') }}"><i class="fa-solid fa-plus"></i> Add Your Website — Free</a>
     {% if payment_link %}
     <a class="btn btn-primary" href="{{ payment_link }}" target="_blank" rel="noopener"><i class="fa-solid fa-bolt"></i> Instant Add — {{ instant_price }}</a>
     {% endif %}
@@ -54,7 +54,7 @@
     {% endfor %}
   </div>
   {% else %}
-  <p style="color:var(--muted,#5a6b85)">No user-submitted sites yet — <a href="{{ url_for('submit') }}">add yours free</a> and get discovered!</p>
+  <p style="color:var(--muted,#5a6b85)">No user-submitted sites yet — <a href="{{ url_for('gp.submit') }}">add yours free</a> and get discovered!</p>
   {% endif %}
 </section>
 
@@ -92,8 +92,8 @@
         <h3>Login to See the Full Guest Posting Sites List</h3>
         <p>144+ high-DA websites accepting guest posts. Free for directory members — submit your website to get a free login.</p>
         <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
-          <a class="btn btn-primary" href="{{ url_for('login') }}"><i class="fa-solid fa-right-to-bracket"></i> Login</a>
-          <a class="btn btn-primary btn-outline" href="{{ url_for('submit') }}"><i class="fa-solid fa-plus"></i> Get Free Login — Add Your Site</a>
+          <a class="btn btn-primary" href="{{ url_for('gp.login') }}"><i class="fa-solid fa-right-to-bracket"></i> Login</a>
+          <a class="btn btn-primary btn-outline" href="{{ url_for('gp.submit') }}"><i class="fa-solid fa-plus"></i> Get Free Login — Add Your Site</a>
         </div>
       </div>
     </div>
@@ -138,7 +138,7 @@
   <article class="content-article mt-8">
     <h2>Want to Get Listed Here?</h2>
     <p>
-      Do you run a website that accepts guest posts? <a href="{{ url_for('submit') }}"><strong>Add your
+      Do you run a website that accepts guest posts? <a href="{{ url_for('gp.submit') }}"><strong>Add your
       website free</strong></a> — our team reviews it and lists you so brands and agencies can find you.
       {% if payment_link %}
       In a hurry? <a href="{{ payment_link }}" target="_blank" rel="noopener"><strong>Get instant

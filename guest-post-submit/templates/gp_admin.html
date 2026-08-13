@@ -1,4 +1,4 @@
-{% extends 'base.html' %}
+{% extends 'gp_base.html' %}
 {% block title %}Guest Post Submissions Admin | TWH{% endblock %}
 {% block canonical %}{{ site_url }}/guest-post-submission/admin{% endblock %}
 {% block meta_desc %}Admin panel for guest post site submissions — approve and manage websites submitted for guest posting.{% endblock %}
@@ -29,8 +29,8 @@
         <td style="max-width:220px">{{ s.content_types[:60] }}</td><td>{{ s.pricing or '-' }}</td>
         <td>{{ (s.created_at|string)[:10] }}</td>
         <td>
-          <a class="btn btn-primary btn-sm btn-green" href="{{ url_for('admin_approve', sid=s.id) }}">Approve</a>
-          <a class="btn btn-primary btn-sm btn-red" href="{{ url_for('admin_reject', sid=s.id) }}">Reject</a>
+          <a class="btn btn-primary btn-sm btn-green" href="{{ url_for('gp.admin_approve', sid=s.id) }}">Approve</a>
+          <a class="btn btn-primary btn-sm btn-red" href="{{ url_for('gp.admin_reject', sid=s.id) }}">Reject</a>
         </td>
       </tr>
       {% else %}

@@ -1,5 +1,0 @@
-flask
-flask-cors
-requests
-gunicorn
-psycopg2-binary>=2.9
