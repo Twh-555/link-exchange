@@ -13,4 +13,8 @@ services:
       - key: CONTACT_EMAIL
         value: hello@thewebhospitality.com
       - key: SECRET_KEY
-        generateValue: true
+        value: lsYd3N-lFyCtQ0k_dAFiktLeag7BeFrx6DeEV08Hkyc
+      - key: ADMIN_USERNAME
+        value: admin
+      - key: ADMIN_PASSWORD
+        value: whp_bR6PS-tMg6N3XZZMfQ
