@@ -61,6 +61,7 @@ ALLOWED_HOSTS = {
     "127.0.0.1", "localhost", "127.0.0.1:5051", "localhost:5051",
     "briefing-volumes-manner-analytical.trycloudflare.com",  # temp demo tunnel
     "guitar-congress-lap-validity.trycloudflare.com",  # temp demo tunnel
+    "link-exchange-1.onrender.com",  # Render free deploy (temp)
 }
 
 
@@ -271,6 +272,45 @@ def close_db(exc):
     db = g.pop("db", None)
     if db is not None:
         db.close()
+
+
+# ---------- seed: fresh deploy gets the full site list ----------
+def seed_if_empty():
+    """On a fresh deploy (empty DB), import seed_sites.json (no passwords)."""
+    seed_file = BASE_DIR / "seed_sites.json"
+    if not seed_file.exists():
+        return
+    db = sqlite3.connect(DB_PATH)
+    try:
+        db.executescript(SCHEMA)  # ensure tables exist on fresh deploy
+        n = db.execute("SELECT COUNT(*) FROM sites").fetchone()[0]
+        if n > 0:
+            return
+        import json as _json
+        data = _json.loads(seed_file.read_text("utf-8"))
+        import datetime
+        now = datetime.datetime.utcnow().isoformat()
+        for s in data:
+            db.execute(
+                """INSERT INTO sites(site_name, site_url, email, niche, description,
+                   dr, da, traffic, status, token, password, verified,
+                   verify_token, verify_expires, owner_verified, created_at,
+                   approved_at, notify)
+                   VALUES(?,?,?,?,?,?,?,?,?,'','',0,'','',?,?,?,?)""",
+                (s["site_name"], s["site_url"], s.get("email", ""), s.get("niche", ""),
+                 s.get("description", ""), s.get("dr", 0), s.get("da", 0),
+                 s.get("traffic", ""), s.get("status", "active"),
+                 s.get("owner_verified", 0),
+                 now,  # created_at
+                 s.get("approved_at") or (now if s.get("status") == "active" else None),
+                 s.get("notify", 0)))
+        db.commit()
+        print(f"[seed] imported {len(data)} sites")
+    finally:
+        db.close()
+
+
+seed_if_empty()
 
 
 # ---------- helpers ----------
