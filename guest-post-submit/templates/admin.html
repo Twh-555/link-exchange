@@ -1,0 +1,83 @@
+{% extends 'base.html' %}
+{% block title %}Guest Post Submissions Admin | TWH{% endblock %}
+{% block canonical %}{{ site_url }}/guest-post-submission/admin{% endblock %}
+{% block meta_desc %}Admin panel for guest post site submissions — approve and manage websites submitted for guest posting.{% endblock %}
+
+{% block content %}
+<section class="hero-section text-center">
+  <div class="hero-badge"><i class="fa-solid fa-shield-halved"></i> Admin Only</div>
+  <h1 class="page-title"><span class="gradient-text">Guest Post Submissions Admin</span></h1>
+  <p class="page-subtitle">Review websites submitted for guest posting. Approve the good ones to keep your list quality high.</p>
+</section>
+
+<div class="stat-row">
+  <div class="stat-chip"><b>{{ pending|length }}</b><span>Pending Review</span></div>
+  <div class="stat-chip"><b>{{ approved|length }}</b><span>Approved Sites</span></div>
+  <div class="stat-chip"><b>{{ rejected|length }}</b><span>Rejected</span></div>
+</div>
+
+<article class="content-article">
+  <h2>Pending Submissions</h2>
+  <div class="admin-table-wrap">
+    <table>
+      <thead><tr><th>Site</th><th>Niche</th><th>DR</th><th>DA</th><th>Email</th><th>Content Types</th><th>Pricing</th><th>Date</th><th>Actions</th></tr></thead>
+      <tbody>
+      {% for s in pending %}
+      <tr>
+        <td><a href="https://{{ s.site_url }}" target="_blank" rel="nofollow">{{ s.site_name }}</a></td>
+        <td>{{ s.niche }}</td><td>{{ s.dr }}</td><td>{{ s.da }}</td><td>{{ s.email }}</td>
+        <td style="max-width:220px">{{ s.content_types[:60] }}</td><td>{{ s.pricing or '-' }}</td>
+        <td>{{ (s.created_at|string)[:10] }}</td>
+        <td>
+          <a class="btn btn-primary btn-sm btn-green" href="{{ url_for('admin_approve', sid=s.id) }}">Approve</a>
+          <a class="btn btn-primary btn-sm btn-red" href="{{ url_for('admin_reject', sid=s.id) }}">Reject</a>
+        </td>
+      </tr>
+      {% else %}
+      <tr><td colspan="9" style="text-align:center;color:#8a97ad;padding:20px">Nothing pending 🎉</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</article>
+
+<article class="content-article mt-8">
+  <h2>Approved Sites</h2>
+  <div class="admin-table-wrap">
+    <table>
+      <thead><tr><th>Site</th><th>Niche</th><th>DR</th><th>DA</th><th>Email</th><th>Pricing</th><th>Status</th></tr></thead>
+      <tbody>
+      {% for s in approved %}
+      <tr>
+        <td><a href="https://{{ s.site_url }}" target="_blank" rel="nofollow">{{ s.site_name }}</a></td>
+        <td>{{ s.niche }}</td><td>{{ s.dr }}</td><td>{{ s.da }}</td><td>{{ s.email }}</td>
+        <td>{{ s.pricing or '-' }}</td>
+        <td><span class="badge-tag tag-free">Approved</span></td>
+      </tr>
+      {% else %}
+      <tr><td colspan="7" style="text-align:center;color:#8a97ad;padding:20px">No approved sites yet</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</article>
+
+<article class="content-article mt-8">
+  <h2>Recently Rejected</h2>
+  <div class="admin-table-wrap">
+    <table>
+      <thead><tr><th>Site</th><th>Email</th><th>DR</th><th>DA</th><th>Date</th></tr></thead>
+      <tbody>
+      {% for s in rejected %}
+      <tr>
+        <td>{{ s.site_name }}</td><td>{{ s.email }}</td><td>{{ s.dr }}</td><td>{{ s.da }}</td>
+        <td>{{ (s.reviewed_at|string)[:10] if s.reviewed_at else (s.created_at|string)[:10] }}</td>
+      </tr>
+      {% else %}
+      <tr><td colspan="5" style="text-align:center;color:#8a97ad;padding:20px">No rejected submissions</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</article>
+{% endblock %}

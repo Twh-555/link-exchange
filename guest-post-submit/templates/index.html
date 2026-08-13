@@ -1,0 +1,150 @@
+{% extends 'base.html' %}
+{% block title %}144+ Free Guest Posting Sites List 2026 for Backlinks | TWH{% endblock %}
+{% block canonical %}{{ site_url }}/guest-posting-sites-list/{% endblock %}
+{% block meta_desc %}Free guest posting sites list 2026 — 144+ high DA websites accepting guest posts. Submit your website free or get instant listing for guest post opportunities.{% endblock %}
+{% block og_title %}144+ Free Guest Posting Sites List 2026 | TWH{% endblock %}
+{% block og_desc %}144+ high DA guest posting sites. Submit your website free for guest post opportunities.{% endblock %}
+
+{% block content %}
+<!-- Hero -->
+<section class="hero-section text-center">
+  <div class="hero-badge"><i class="fa-solid fa-pen-nib"></i> 144+ Sites • Updated 2026</div>
+  <h1 class="page-title"><span class="gradient-text">Free Guest Posting Sites List</span></h1>
+  <p class="page-subtitle">
+    The most complete <strong>guest posting sites list</strong> for 2026 — high DA websites accepting
+    guest posts. Get free backlinks, build authority, and grow your site. Also add your own website
+    to get discovered by brands.
+  </p>
+  <div class="hero-actions" style="margin-top:18px;display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
+    <a class="btn btn-primary" href="{{ url_for('submit') }}"><i class="fa-solid fa-plus"></i> Add Your Website — Free</a>
+    {% if payment_link %}
+    <a class="btn btn-primary" href="{{ payment_link }}" target="_blank" rel="noopener"><i class="fa-solid fa-bolt"></i> Instant Add — {{ instant_price }}</a>
+    {% endif %}
+  </div>
+</section>
+
+<!-- AEO quick answer -->
+<section class="content-article" style="margin-top:26px">
+  <h2 style="font-size:1.2rem">What Is the Best Free Guest Posting Sites List?</h2>
+  <p>The best free guest posting sites list is a regularly updated directory of high-authority blogs and
+    publications that accept contributor content. The list below includes 144+ sites across 10 niches with
+    their Domain Authority (DA) and submission page — so you can pitch, publish, and earn backlinks today.</p>
+</section>
+
+<!-- Approved user-submitted sites -->
+<section class="content-article mt-8">
+  <h2>Recently Added Guest Post Sites</h2>
+  {% if approved %}
+  <div class="directory-grid">
+    {% for s in approved %}
+    <div class="site-card">
+      <div class="site-card-top">
+        <h3><a href="https://{{ s.site_url }}" target="_blank" rel="nofollow">{{ s.site_name }}</a></h3>
+      </div>
+      <div class="site-meta">
+        <span class="badge-tag tag-dr">DR {{ s.dr }}</span>
+        <span class="badge-tag tag-da">DA {{ s.da }}</span>
+        {% for n in (s.niche or '').split(', ') %}
+          {% if n %}<span class="badge-tag tag-niche">{{ n }}</span>{% endif %}
+        {% endfor %}
+      </div>
+      {% if s.content_types %}<p class="desc">📝 {{ s.content_types[:90] }}</p>{% endif %}
+      {% if s.pricing %}<p class="desc">💰 {{ s.pricing }}</p>{% endif %}
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <p style="color:var(--muted,#5a6b85)">No user-submitted sites yet — <a href="{{ url_for('submit') }}">add yours free</a> and get discovered!</p>
+  {% endif %}
+</section>
+
+<!-- ===== SAME CONTENT AS ORIGINAL PAGE (tables) ===== -->
+<section class="seo-content-section mt-12">
+  {% if not user_email %}
+  <!-- LOGIN GATE: blur + CTA for logged-out visitors -->
+  <div id="dirGate" class="dir-gate">
+    <div class="gate-blur">
+      {% for section in data.tables %}
+      <article class="content-article mt-8">
+        <h2>{{ section.title }}</h2>
+        <div class="table-responsive">
+          <table class="twh-table">
+            <thead>
+              <tr><th>Website Name</th><th>Page</th><th>DA</th></tr>
+            </thead>
+            <tbody>
+              {% for row in section.rows %}
+              <tr>
+                <td>██████████████</td>
+                <td>████████████████</td>
+                <td><span class="badge-tag tag-dr">██</span></td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </article>
+      {% endfor %}
+    </div>
+    <div class="gate-overlay">
+      <div class="gate-card">
+        <i class="fa-solid fa-lock" style="font-size:2rem;color:#0a7a3d;margin-bottom:10px"></i>
+        <h3>Login to See the Full Guest Posting Sites List</h3>
+        <p>144+ high-DA websites accepting guest posts. Free for directory members — submit your website to get a free login.</p>
+        <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+          <a class="btn btn-primary" href="{{ url_for('login') }}"><i class="fa-solid fa-right-to-bracket"></i> Login</a>
+          <a class="btn btn-primary btn-outline" href="{{ url_for('submit') }}"><i class="fa-solid fa-plus"></i> Get Free Login — Add Your Site</a>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% else %}
+  {% for section in data.tables %}
+  <article class="content-article mt-8">
+    <h2>{{ section.title }}</h2>
+    <div class="table-responsive">
+      <table class="twh-table">
+        <thead>
+          <tr><th>Website Name</th><th>Page</th><th>DA</th></tr>
+        </thead>
+        <tbody>
+          {% for row in section.rows %}
+          <tr>
+            <td>{% if row.url %}<a href="{{ row.url }}" target="_blank" rel="nofollow">{{ row.name }}</a>{% else %}{{ row.name }}{% endif %}</td>
+            <td>{{ row.page }}</td>
+            <td><span class="badge-tag tag-dr">{{ row.da }}</span></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </article>
+  {% endfor %}
+  {% endif %}
+
+  <!-- Guides (same content as original) -->
+  {% for title, items in data.guides.items() %}
+  <article class="content-article mt-8">
+    <h2>{{ title }}</h2>
+    <ul class="styled-list">
+      {% for item in items %}
+      <li>{{ item }}</li>
+      {% endfor %}
+    </ul>
+  </article>
+  {% endfor %}
+
+  <!-- Add your site CTA -->
+  <article class="content-article mt-8">
+    <h2>Want to Get Listed Here?</h2>
+    <p>
+      Do you run a website that accepts guest posts? <a href="{{ url_for('submit') }}"><strong>Add your
+      website free</strong></a> — our team reviews it and lists you so brands and agencies can find you.
+      {% if payment_link %}
+      In a hurry? <a href="{{ payment_link }}" target="_blank" rel="noopener"><strong>Get instant
+      listing for {{ instant_price }}</strong></a> — your site goes live immediately.
+      {% endif %}
+    </p>
+  </article>
+</section>
+{% endblock %}

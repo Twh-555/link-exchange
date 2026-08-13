@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% block title %}Guest Post Site Submission{% endblock %}</title>
+<meta name="description" content="{% block meta_desc %}Submit your website for guest posting on The Web Hospitality's guest posting sites list.{% endblock %}">
+<link rel="canonical" href="{% block canonical %}{{ site_url }}/guest-posting-sites-list/{% endblock %}">
+<meta name="robots" content="index, follow">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="The Web Hospitality">
+<meta property="og:url" content="{% block og_url %}{{ site_url }}/guest-posting-sites-list/{% endblock %}">
+<meta property="og:title" content="{% block og_title %}Guest Post Site Submission{% endblock %}">
+<meta property="og:description" content="{% block og_desc %}Submit your website for guest posting.{% endblock %}">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="{% block tw_title %}Guest Post Site Submission{% endblock %}">
+<meta name="twitter:description" content="{% block tw_desc %}Submit your website for guest posting.{% endblock %}">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+{% block extra_head %}{% endblock %}
+</head>
+<body>
+{% include '_header.html' %}
+
+<main class="main-wrapper">
+  <div class="container">
+    {% block content %}{% endblock %}
+  </div>
+</main>
+
+{% include '_footer.html' %}
+{% block scripts %}{% endblock %}
+</body>
+</html>
