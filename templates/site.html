@@ -92,6 +92,34 @@
     </ol>
   </article>
 
+  <article class="content-article mt-8">
+    <h2>Is {{ s.site_name }} a Good Backlink Source?</h2>
+    <p>
+      Whether {{ s.site_name }} is worth a backlink depends on relevance and authority. The site
+      has a Domain Rating of <b>{{ s.dr }}</b>{% if s.da %} and a Domain Authority of <b>{{ s.da }}</b>{% endif %},
+      which tells you how strong its own backlink profile is. For most {{ s.niche }} campaigns, a DR
+      of 20 or higher from a topically relevant site is a solid partner. If the site also reports
+      real traffic, the referral visitors you earn from the link are a bonus on top of the SEO value.
+    </p>
+    <p>
+      Keep your link placement natural: put the {{ s.site_name }} link inside a relevant article or
+      resource page rather than a bare links directory. Google treats contextual, editorial links as
+      far more valuable than sidebar or footer links. And remember — an exchange only helps you if
+      the other site keeps the link live, so track it periodically.
+    </p>
+  </article>
+
+  <article class="content-article mt-8">
+    <h2>Before You Exchange Links With {{ s.site_name }}</h2>
+    <ul class="styled-list">
+      <li><strong>Check the niche match</strong> — {{ s.niche }} sites should only exchange with sites that share the same or a closely related audience.</li>
+      <li><strong>Set a DR floor</strong> — partner with sites near or above {{ s.dr }} DR so the exchange is balanced and beneficial for both sides.</li>
+      <li><strong>Agree on placement</strong> — clarify whether the link goes in content, sidebar or footer before you approve anything.</li>
+      <li><strong>Keep records</strong> — note the URL where you placed the partner's link and where they placed yours, so nothing can silently disappear.</li>
+      <li><strong>Stay under 10% reciprocal</strong> — Google prefers diverse profiles; don't let exchanges dominate your backlink portfolio.</li>
+    </ul>
+  </article>
+
   {% if sellers|length > 1 %}
   <article class="content-article mt-8">
     <h2>{% if sellers|length %}Available Sellers / Partners ({{ sellers|length }}){% endif %}</h2>
