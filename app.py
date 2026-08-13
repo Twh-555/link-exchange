@@ -162,19 +162,10 @@ def send_mail(to_email, subject, html_body):
         return False, str(e)
 
 NICHES = [
-    "All", "Astrology / Esotericism", "Business / Finance", "City Portals",
-    "Construction / Repair", "Cooking", "Country House", "Cryptocurrencies",
-    "Culture / Art", "Ecology / Conservation", "Education / Science",
-    "Electronics / Technology", "Entertainment / Hobbies", "Fashion / Beauty",
-    "Furniture / Interior", "Health / Medicine", "Home / Family", "Internet",
-    "Law / Jurisprudence", "Lifestyle", "Logistics / Transportation",
-    "Manufacturing / Agriculture", "Marketing", "Media / News",
-    "Mobile Technology", "Music / Cinema", "Other", "PC / Video Games",
-    "Pets", "Photography / Videography", "Psychology / Development",
-    "Real Estate", "Religion", "SaaS", "SEO / Marketing",
-    "Society / Politics", "Software / PC", "Sports / Nutrition",
-    "Tech / SaaS", "Technologies", "Tourism / Travel", "Web Design",
-    "Web Development", "Shopping / Coupons", "Work / Jobs",
+    "All", "Finance", "Business", "Marketing", "SaaS",
+    "Cryptocurrency", "Pets", "Travel Tourism", "Cooking Food",
+    "Beauty Fashion", "Health and Fitness", "Technology",
+    "Education Science", "News Media", "Entertainment Hobbies",
 ]
 
 SCHEMA = """
@@ -1638,10 +1629,14 @@ def niche_page(niche_name):
     niche_name = niche_name.rstrip("/")  # strip trailing slash from path converter
     # normalize: "tech-saas" -> "Tech / SaaS"
     pretty = niche_name.replace("-", " ").title()
+    matched = False
     for n in NICHES:
         if n.lower().replace(" / ", "-").replace(" ", "-") == niche_name.lower():
             pretty = n
+            matched = True
             break
+    if not matched:
+        return "Not found", 404  # old/removed niche -> no index
     sites = db.execute(
         "SELECT * FROM sites WHERE status='active' AND niche LIKE ? ORDER BY dr DESC",
         (f"%{pretty}%",)).fetchall()
